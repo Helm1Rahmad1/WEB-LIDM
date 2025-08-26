@@ -134,22 +134,10 @@ export default async function RoomStudentsPage({ params }: Props) {
                             {/* Student Header */}
                             <div className="flex items-center space-x-4 mb-6">
                               <div className="relative">
-                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#147E7E] to-[#2C3E50] flex items-center justify-center text-white font-bold text-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                                  {enrollment.users?.name?.charAt(0).toUpperCase()}
-                                </div>
-                                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-                                  <div className="w-2 h-2 bg-white rounded-full"></div>
-                                </div>
                               </div>
                               <div className="flex-1">
-                                <h3 className="text-2xl font-bold text-[#2C3E50] group-hover:text-[#147E7E] transition-colors duration-300 mb-2">
-                                  {enrollment.users?.name}
-                                </h3>
                                 <div className="flex flex-wrap items-center gap-4 text-sm">
-                                  <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-[#147E7E]/10 border border-[#147E7E]/20">
-                                    <Mail className="h-4 w-4 text-[#147E7E]" />
-                                    <span className="text-[#2C3E50] font-medium">{enrollment.users?.email}</span>
-                                  </div>
+                                 
                                   <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-[#F1C40F]/10 border border-[#F1C40F]/20">
                                     <Calendar className="h-4 w-4 text-[#F1C40F]" />
                                     <span className="text-[#2C3E50] font-medium">
