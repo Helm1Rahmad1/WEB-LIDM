@@ -35,17 +35,26 @@ export default function RegisterPage() {
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
-          data: {
-            name,
-            role,
-          },
+          data: { name, role }, // metadata
         },
       })
+      
+      if (error) throw error
+      
+      // setelah signup sukses, simpan juga ke tabel users custom
+      if (data.user) {
+        await supabase.from("users").insert({
+          user_id: data.user.id,   // UUID dari Supabase Auth
+          name,
+          email,
+          role,
+        })
+      }
+      
       if (error) throw error
       router.push("/auth/register-success")
     } catch (error: unknown) {

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, BookOpen, Award, Plus } from "lucide-react"
+import { Users, BookOpen, Award, Plus, Table2 } from "lucide-react"
 import Link from "next/link"
 
 export default async function GuruDashboardPage() {
@@ -111,74 +111,99 @@ export default async function GuruDashboardPage() {
           </Card>
         </div>
 
-        {/* Rooms List */}
-        <Card className="border-0 shadow-lg">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle style={{ color: "#2C3E50" }}>Kelas Saya</CardTitle>
-                <CardDescription>Kelola dan pantau progres murid di setiap kelas</CardDescription>
-              </div>
-              <Link href="/dashboard/guru/rooms/create">
-                <Button className="text-white" style={{ backgroundColor: "#147E7E" }}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Tambah Kelas
-                </Button>
-              </Link>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {rooms && rooms.length > 0 ? (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {rooms.map((room) => (
-                  <Card key={room.room_id} className="border border-gray-200 hover:shadow-md transition-shadow">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-lg" style={{ color: "#2C3E50" }}>
-                        {room.name}
-                      </CardTitle>
-                      <CardDescription className="text-sm">{room.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <div className="flex justify-between items-center mb-4">
-                        <div className="text-sm text-gray-600">
-                          <span className="font-medium">Kode:</span> {room.code}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          <Users className="h-4 w-4 inline mr-1" />
-                          {room.enrollments?.[0]?.count || 0} murid
-                        </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Link href={`/dashboard/guru/rooms/${room.room_id}`} className="flex-1">
-                          <Button size="sm" className="w-full text-white" style={{ backgroundColor: "#147E7E" }}>
-                            Lihat Detail
-                          </Button>
-                        </Link>
-                        <Link href={`/dashboard/guru/rooms/${room.room_id}/students`} className="flex-1">
-                          <Button size="sm" variant="outline" className="w-full bg-transparent">
-                            Murid
-                          </Button>
-                        </Link>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <h3 className="text-lg font-medium text-gray-600 mb-2">Belum ada kelas</h3>
-                <p className="text-gray-500 mb-4">Mulai dengan membuat kelas pertama Anda</p>
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle style={{ color: "#2C3E50" }}>Kelas Saya</CardTitle>
+                    <CardDescription>Kelola dan pantau progres murid di setiap kelas</CardDescription>
+                  </div>
+                  <Link href="/dashboard/guru/rooms/create">
+                    <Button className="text-white" style={{ backgroundColor: "#147E7E" }}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Tambah Kelas
+                    </Button>
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {rooms && rooms.length > 0 ? (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {rooms.map((room) => (
+                      <Card key={room.room_id} className="border border-gray-200 hover:shadow-md transition-shadow">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-lg" style={{ color: "#2C3E50" }}>
+                            {room.name}
+                          </CardTitle>
+                          <CardDescription className="text-sm">{room.description}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <div className="flex justify-between items-center mb-4">
+                            <div className="text-sm text-gray-600">
+                              <span className="font-medium">Kode:</span> {room.code}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              <Users className="h-4 w-4 inline mr-1" />
+                              {room.enrollments?.[0]?.count || 0} murid
+                            </div>
+                          </div>
+                          <div className="flex space-x-2">
+                            <Link href={`/dashboard/guru/rooms/${room.room_id}`} className="flex-1">
+                              <Button size="sm" className="w-full text-white" style={{ backgroundColor: "#147E7E" }}>
+                                Lihat Detail
+                              </Button>
+                            </Link>
+                            <Link href={`/dashboard/guru/rooms/${room.room_id}/students`} className="flex-1">
+                              <Button size="sm" variant="outline" className="w-full bg-transparent">
+                                Murid
+                              </Button>
+                            </Link>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <BookOpen className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <h3 className="text-lg font-medium text-gray-600 mb-2">Belum ada kelas</h3>
+                    <p className="text-gray-500 mb-4">Mulai dengan membuat kelas pertama Anda</p>
+                    <Link href="/dashboard/guru/rooms/create">
+                      <Button className="text-white" style={{ backgroundColor: "#147E7E" }}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Buat Kelas Pertama
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+          <div className="space-y-6">
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-lg" style={{ color: "#2C3E50" }}>
+                  Aksi Cepat
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
                 <Link href="/dashboard/guru/rooms/create">
-                  <Button className="text-white" style={{ backgroundColor: "#147E7E" }}>
+                  <Button className="w-full text-white" style={{ backgroundColor: "#147E7E" }}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Buat Kelas Pertama
+                    Buat Kelas Baru
                   </Button>
                 </Link>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                <form action="/auth/logout" method="post">
+                  <Button variant="outline" className="w-full bg-transparent">
+                    Keluar
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   )

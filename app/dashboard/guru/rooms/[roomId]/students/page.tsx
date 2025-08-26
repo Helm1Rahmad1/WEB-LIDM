@@ -32,15 +32,15 @@ export default async function RoomStudentsPage({ params }: Props) {
   }
 
   // Get students with their progress
-  const { data: students } = await supabase
-    .from("enrollments")
-    .select(`
-      *,
-      users(name, email),
-      user_letter_progress(status),
-      letter_tests(score, status)
-    `)
-    .eq("room_id", roomId)
+  const { data, error: roomsError } = await supabase.from("rooms").select("*")
+
+const { data: students, error: studentsError } = await supabase
+  .from("enrollments")
+  .select("*, user_id, room_id")
+  .eq("room_id", roomId)
+
+
+
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#D5DBDB" }}>
