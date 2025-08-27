@@ -115,7 +115,8 @@ export default async function GuruDashboardPage() {
                   </div>
                 </div>
                 <p className="text-base text-white/90 font-medium">
-                  Selamat datang kembali, <span className="text-[#F1C40F] font-bold">{user.user.user_metadata?.name}</span>
+                  {/* Selamat datang kembali, <span className="text-[#F1C40F] font-bold">{user.user.user_metadata?.name}</span> */}
+                  Selamat datang kembali, <span className="text-[#F1C40F] font-bold">Dudi</span>
                 </p>
                 <p className="text-sm text-white/70 mt-1">Kelola pembelajaran dengan mudah dan efektif</p>
               </div>
