@@ -1,38 +1,91 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+// import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Users, BookOpen, Award, Plus, Settings, TrendingUp, ArrowRight, Sparkles, Target, BarChart3, LogOut } from "lucide-react"
 import Link from "next/link"
 
 export default async function GuruDashboardPage() {
-  const supabase = await createClient()
+  // ---------------------------------------------------------------------------
+  // NOTE: Original implementation used Supabase to authenticate the user and
+  // fetch rooms/enrollments. To avoid real DB reads/writes in dev/preview, that
+  // code is commented out below and replaced with hardcoded sample data.
+  // ---------------------------------------------------------------------------
 
-  const { data: user, error } = await supabase.auth.getUser()
-  if (error || !user?.user) {
-    redirect("/auth/login")
+  // const supabase = await createClient()
+
+  // const { data: user, error } = await supabase.auth.getUser()
+  // if (error || !user?.user) {
+  //   redirect("/auth/login")
+  // }
+
+  // // Check if user is guru
+  // const userRole = user.user.user_metadata?.role
+  // if (userRole !== "guru") {
+  //   redirect("/dashboard/murid")
+  // }
+
+  // // Get teacher's rooms
+  // const { data: rooms } = await supabase
+  //   .from("rooms")
+  //   .select(`
+  //     *,
+  //     enrollments(count)
+  //   `)
+  //   .eq("created_by", user.user.id)
+
+  // // Get total students across all rooms
+  // const { count: totalStudents } = await supabase
+  //   .from("enrollments")
+  //   .select("*", { count: "exact", head: true })
+  //   .in("room_id", rooms?.map((room) => room.room_id) || [])
+
+  // ---------------------------------------------------------------------------
+  // Hardcoded sample user and rooms (safe — no DB access).
+  // Adjust values as needed for development or UI preview.
+  // ---------------------------------------------------------------------------
+
+  const user = {
+    user: {
+      id: "guru-uuid-1",
+      user_metadata: {
+        role: "guru",
+        name: "Helmi Rahmadi"
+      }
+    }
   }
 
-  // Check if user is guru
-  const userRole = user.user.user_metadata?.role
-  if (userRole !== "guru") {
-    redirect("/dashboard/murid")
-  }
+  const rooms = [
+    {
+      room_id: 101,
+      name: "Kelas Hijaiyah A",
+      code: "KHJ-A-2025",
+      description: "Kelas dasar membaca huruf hijaiyah",
+      created_by: user.user.id,
+      enrollments: [{ count: 12 }]
+    },
+    {
+      room_id: 102,
+      name: "Kelas Hijaiyah B",
+      code: "KHJ-B-2025",
+      description: "Kelas lanjutan huruf hijaiyah",
+      created_by: user.user.id,
+      enrollments: [{ count: 8 }]
+    },
+    {
+      room_id: 103,
+      name: "Kelas Tahsin",
+      code: "TSN-2025",
+      description: "Latihan pengucapan dan tajwid",
+      created_by: user.user.id,
+      enrollments: [{ count: 15 }]
+    }
+  ]
 
-  // Get teacher's rooms
-  const { data: rooms } = await supabase
-    .from("rooms")
-    .select(`
-      *,
-      enrollments(count)
-    `)
-    .eq("created_by", user.user.id)
+  const totalStudents = rooms.reduce((sum, r) => sum + (r.enrollments?.[0]?.count || 0), 0)
 
-  // Get total students across all rooms
-  const { count: totalStudents } = await supabase
-    .from("enrollments")
-    .select("*", { count: "exact", head: true })
-    .in("room_id", rooms?.map((room) => room.room_id) || [])
+  // If you want to simulate unauthenticated access during dev, uncomment:
+  // redirect("/auth/login")
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#D5DBDB] via-[#D5DBDB] to-[#c8d0d0] relative overflow-hidden">
@@ -261,7 +314,7 @@ export default async function GuruDashboardPage() {
           {/* Enhanced Sidebar */}
           <div className="space-y-8">
             {/* Quick Actions Card */}
-            <Card className="border-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden">
+            {/* <Card className="border-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden">
               <CardHeader className="bg-gradient-to-r from-[#F1C40F]/10 to-transparent p-8">
                 <CardTitle className="text-2xl font-bold text-[#2C3E50] flex items-center space-x-3">
                   <div className="p-2 rounded-xl bg-[#F1C40F]/20">
@@ -283,7 +336,7 @@ export default async function GuruDashboardPage() {
                   <span>Pengaturan</span>
                 </Button>
               </CardContent>
-            </Card>
+            </Card> */}
 
             {/* Enhanced Statistics Summary */}
             <Card className="border-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden">

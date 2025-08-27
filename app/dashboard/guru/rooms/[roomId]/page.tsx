@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+// import { createClient } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -12,39 +12,105 @@ interface Props {
 
 export default async function RoomDetailPage({ params }: Props) {
   const { roomId } = await params
-  const supabase = await createClient()
 
-  const { data: user, error } = await supabase.auth.getUser()
-  if (error || !user?.user) {
-    redirect("/auth/login")
+  // ---------------------------------------------------------------------------
+  // NOTE: The original implementation used Supabase to fetch the authenticated
+  // user, room details, students, and progress stats. To avoid performing any
+  // real database reads/writes while developing or previewing UI, that code is
+  // commented out below and replaced with hardcoded sample data. If you want
+  // to re-enable DB access later, uncomment the original lines.
+  // ---------------------------------------------------------------------------
+
+  // const supabase = await createClient()
+
+  // const { data: user, error } = await supabase.auth.getUser()
+  // if (error || !user?.user) {
+  //   redirect("/auth/login")
+  // }
+
+  // // Get room details
+  // const { data: room } = await supabase
+  //   .from("rooms")
+  //   .select("*")
+  //   .eq("room_id", roomId)
+  //   .eq("created_by", user.user.id)
+  //   .single()
+
+  // if (!room) {
+  //   redirect("/dashboard/guru")
+  // }
+
+  // // Get students in this room
+  // const { data: students } = await supabase
+  //   .from("enrollments")
+  //   .select(`
+  //     *,
+  //     users(name, email)
+  //   `)
+  //   .eq("room_id", roomId)
+
+  // // Get progress statistics
+  // const { data: progressStats } = await supabase.from("user_letter_progress").select("status").eq("room_id", roomId)
+
+  // ---------------------------------------------------------------------------
+  // Hardcoded sample data (safe — no DB reads/writes). Adjust values as needed.
+  // ---------------------------------------------------------------------------
+
+  const room = {
+    room_id: Number(roomId || 1),
+    name: "Kelas Hijaiyah A",
+    code: "KHJ-2025",
+    description: "Kelas belajar huruf hijaiyah untuk pemula",
+    created_at: new Date().toISOString()
   }
 
-  // Get room details
-  const { data: room } = await supabase
-    .from("rooms")
-    .select("*")
-    .eq("room_id", roomId)
-    .eq("created_by", user.user.id)
-    .single()
+  // Four sample students: Helmi, Egis, Hasbi, Azril
+  const students = [
+    {
+      enrollment_id: 1,
+      user_id: "user-helmi-uuid",
+      users: { name: "Helmi", email: "helmir@gmail.com" },
+      joined_at: "2025-08-01T10:00:00Z",
+      totalPages: 100,
+      totalCompletedPages: 7,
+      completedJilid: 0,
+      progressPercentage: 7
+    },
+    {
+      enrollment_id: 2,
+      user_id: "user-egis-uuid",
+      users: { name: "Egis", email: "egis@example.com" },
+      joined_at: "2025-07-15T09:30:00Z",
+      totalPages: 100,
+      totalCompletedPages: 12,
+      completedJilid: 1,
+      progressPercentage: 12
+    },
+    {
+      enrollment_id: 3,
+      user_id: "user-hasbi-uuid",
+      users: { name: "Hasbi", email: "hasbi@example.com" },
+      joined_at: "2025-06-10T11:20:00Z",
+      totalPages: 100,
+      totalCompletedPages: 20,
+      completedJilid: 2,
+      progressPercentage: 20
+    },
+    {
+      enrollment_id: 4,
+      user_id: "user-azril-uuid",
+      users: { name: "Azril", email: "azril@example.com" },
+      joined_at: "2025-08-05T14:45:00Z",
+      totalPages: 100,
+      totalCompletedPages: 5,
+      completedJilid: 0,
+      progressPercentage: 5
+    }
+  ]
 
-  if (!room) {
-    redirect("/dashboard/guru")
-  }
-
-  // Get students in this room
-  const { data: students } = await supabase
-    .from("enrollments")
-    .select(`
-      *,
-      users(name, email)
-    `)
-    .eq("room_id", roomId)
-
-  // Get progress statistics
-  const { data: progressStats } = await supabase.from("user_letter_progress").select("status").eq("room_id", roomId)
-
-  const totalProgress = progressStats?.length || 0
-  const completedProgress = progressStats?.filter((p) => p.status === "selesai").length || 0
+  // Compute progress stats from hardcoded students
+  const totalProgress = students.reduce((sum, s) => sum + (s.totalPages || 0), 0)
+  const completedProgress = students.reduce((sum, s) => sum + (s.totalCompletedPages || 0), 0)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#D5DBDB] via-[#D5DBDB] to-[#c8d0d0] relative overflow-hidden">
@@ -348,7 +414,7 @@ export default async function RoomDetailPage({ params }: Props) {
           {/* Enhanced Sidebar */}
           <div className="space-y-8">
             {/* Quick Actions Card */}
-            <Card className="border-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden">
+            {/* <Card className="border-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden">
               <CardHeader className="bg-gradient-to-r from-[#F1C40F]/10 to-transparent p-8">
                 <CardTitle className="text-2xl font-bold text-[#2C3E50] flex items-center space-x-3">
                   <div className="p-2 rounded-xl bg-[#F1C40F]/20">
@@ -378,7 +444,7 @@ export default async function RoomDetailPage({ params }: Props) {
                   </Button>
                 </Link>
               </CardContent>
-            </Card>
+            </Card> */}
 
             {/* Enhanced Statistics Summary */}
             <Card className="border-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden">
@@ -409,7 +475,7 @@ export default async function RoomDetailPage({ params }: Props) {
             </Card>
 
             {/* Class Settings Card */}
-            <Card className="border-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden">
+            {/* <Card className="border-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden">
               <CardHeader className="bg-gradient-to-r from-[#147E7E]/10 to-transparent p-8">
                 <CardTitle className="text-2xl font-bold text-[#2C3E50] flex items-center space-x-3">
                   <div className="p-2 rounded-xl bg-[#147E7E]/20">
@@ -428,7 +494,7 @@ export default async function RoomDetailPage({ params }: Props) {
                   <span>Arsipkan Kelas</span>
                 </Button>
               </CardContent>
-            </Card>
+            </Card> */}
           </div>
         </div>
       </div>

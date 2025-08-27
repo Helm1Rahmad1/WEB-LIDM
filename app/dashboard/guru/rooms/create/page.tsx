@@ -99,7 +99,8 @@ export default function CreateRoomPage() {
         </div>
       </header>
 
-      <div className="relative z-10 max-w-5xl mx-auto p-6 space-y-8">
+      {/* Main content container: increased max width and responsive padding for better layout */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-10 space-y-8">
         {/* Progress Indicator */}
         <div className="flex justify-center">
           <div className="flex items-center space-x-4 bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-xl border border-white/40">
@@ -119,25 +120,25 @@ export default function CreateRoomPage() {
           </div>
         </div>
 
-        {/* Main Form Card */}
-        <div className="grid lg:grid-cols-3 gap-8">
+        {/* Main Form Card - responsive grid and spacing adjustments */}
+        <div className="grid lg:grid-cols-3 lg:gap-10 gap-6">
           {/* Form Section */}
           <div className="lg:col-span-2">
             <Card className="border-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-[#147E7E]/5 via-transparent to-[#F1C40F]/5 p-10 border-b border-[#D5DBDB]/20">
+              <CardHeader className="bg-gradient-to-r from-[#147E7E]/5 via-transparent to-[#F1C40F]/5 p-8 sm:p-10 border-b border-[#D5DBDB]/20">
                 <div className="flex items-center space-x-4 mb-4">
                   <div className="p-3 rounded-2xl bg-[#147E7E]/10">
                     <BookOpen className="h-7 w-7 text-[#147E7E]" />
                   </div>
                   <div>
-                    <CardTitle className="text-3xl font-bold text-[#2C3E50]">Informasi Kelas</CardTitle>
-                    <CardDescription className="text-[#2C3E50]/70 text-lg mt-2">
+                    <CardTitle className="text-2xl sm:text-3xl font-bold text-[#2C3E50]">Informasi Kelas</CardTitle>
+                    <CardDescription className="text-[#2C3E50]/70 text-base sm:text-lg mt-2">
                       Lengkapi detail kelas untuk memulai pembelajaran yang efektif
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-10">
+              <CardContent className="p-6 sm:p-8 lg:p-10">
                 <form onSubmit={handleSubmit} className="space-y-8">
                   {/* Nama Kelas */}
                   <div className="space-y-4">
@@ -153,7 +154,7 @@ export default function CreateRoomPage() {
                         required
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="h-14 text-lg border-2 border-[#D5DBDB] focus:border-[#147E7E] bg-white/80 backdrop-blur-sm rounded-xl px-6 font-medium transition-all duration-300 hover:shadow-lg focus:shadow-xl"
+                        className="h-14 sm:h-14 text-base sm:text-lg border-2 border-[#D5DBDB] focus:border-[#147E7E] bg-white/80 backdrop-blur-sm rounded-xl px-6 font-medium transition-all duration-300 hover:shadow-lg focus:shadow-xl"
                       />
                       <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
                         <BookOpen className="h-5 w-5 text-[#147E7E]/50" />
@@ -175,7 +176,7 @@ export default function CreateRoomPage() {
                       placeholder="Jelaskan tujuan pembelajaran, materi yang akan dipelajari, dan target pencapaian murid di kelas ini. Contoh: Kelas ini dirancang untuk memperkenalkan huruf hijaiyah kepada pemula dengan metode interaktif dan menyenangkan..."
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      className="min-h-[140px] text-lg border-2 border-[#D5DBDB] focus:border-[#F1C40F] bg-white/80 backdrop-blur-sm rounded-xl p-6 font-medium transition-all duration-300 hover:shadow-lg focus:shadow-xl resize-none"
+                      className="min-h-[140px] sm:min-h-[160px] text-base sm:text-lg border-2 border-[#D5DBDB] focus:border-[#F1C40F] bg-white/80 backdrop-blur-sm rounded-xl p-6 font-medium transition-all duration-300 hover:shadow-lg focus:shadow-xl resize-none"
                     />
                     <p className="text-sm text-[#2C3E50]/60 font-medium ml-1">
                       Deskripsi yang menarik akan membantu murid memahami manfaat dari kelas ini
