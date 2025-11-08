@@ -25,9 +25,18 @@ services:
       DB_NAME: lidm
       DB_USER: postgres
       DB_PASSWORD: postgres
-      JWT_SECRET: your-secret-key-change-this-in-production
+      JWT_SECRET: lidm-jwt-secret-key-change-this-in-production-2024
       PORT: 3001
-      FRONTEND_URL: http://localhost:3000
+      # Accept requests from both localhost and frontend container
+      FRONTEND_URL: http://localhost:3000,http://lidm-frontend:3000
+      NODE_ENV: development
+      # Email Configuration
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: 587
+      SMTP_USER: juarasatulidm2025@gmail.com
+      SMTP_PASS: rsrl jlfq valq oojm
+      FROM_EMAIL: juarasatulidm2025@gmail.com
+      FROM_NAME: Sign Quran
     ports:
       - "3001:3001"
     depends_on:
@@ -40,6 +49,7 @@ services:
     build: .
     container_name: lidm-frontend
     environment:
+      # Browser will use localhost (since it's accessed from host machine)
       NEXT_PUBLIC_API_URL: http://localhost:3001
     ports:
       - "3000:3000"

@@ -15,15 +15,11 @@ export const authApi = {
 
   login: async (email: string, password: string) => {
     const response = await apiClient.post('/api/auth/login', { email, password });
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-    }
     return response.data;
   },
 
   logout: async () => {
     await apiClient.post('/api/auth/logout');
-    localStorage.removeItem('token');
   },
 
   getUser: async (): Promise<User | null> => {
@@ -31,6 +27,7 @@ export const authApi = {
       const response = await apiClient.get('/api/auth/me');
       return response.data.user;
     } catch (error) {
+      console.error('Get user error:', error);
       return null;
     }
   },

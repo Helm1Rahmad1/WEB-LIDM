@@ -1,0 +1,12 @@
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+export function middleware(request: NextRequest) {
+  // Completely disable middleware for now to fix infinite loop
+  return NextResponse.next();
+}
+
+// Disable the matcher to prevent any middleware execution
+export const config = {
+  matcher: [],
+}

@@ -1,39 +1,97 @@
-import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+"use client"
+
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/hooks/useAuth"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { BookOpen, Users, Award, Plus, TrendingUp } from "lucide-react"
 import Link from "next/link"
 
-export default async function MuridDashboardPage() {
-  const supabase = await createClient()
+export default function MuridDashboardPage() {
+  const { user, loading } = useAuth()
+  const router = useRouter()
 
-  const { data: user, error } = await supabase.auth.getUser()
-  if (error || !user?.user) {
-    redirect("/auth/login")
+  // Require user to be authenticated as a murid
+  useEffect(() => {
+    console.log('🔍 Dashboard - loading:', loading, 'user:', user?.email, 'role:', user?.role)
+    
+    if (!loading) {
+      if (!user) {
+        console.log('❌ No user, redirecting to login')
+        router.replace('/auth/login')
+        return
+      }
+      
+      if (user.role !== 'murid') {
+        console.log('❌ Wrong role, redirecting to appropriate dashboard')
+        router.replace(`/dashboard/${user.role}`)
+        return
+      }
+      
+      console.log('✅ Murid dashboard access granted for:', user.email)
+    }
+  }, [user, loading, router])
+
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#147E7E] border-t-transparent mb-4"></div>
+          <p className="text-lg text-[#2C3E50] font-medium">Memuat...</p>
+        </div>
+      </div>
+    )
   }
 
-  // Check if user is murid
-  const userRole = user.user.user_metadata?.role
-  if (userRole !== "murid") {
-    redirect("/dashboard/guru")
+  // Redirect if not authorized (will be handled by useEffect)
+  if (!user || user.role !== 'murid') {
+    return null
   }
 
-  // Get student's enrolled classes
-  const { data: enrollments } = await supabase
-    .from("enrollments")
-    .select(`
-      *,
-      rooms(name, description, code)
-    `)
-    .eq("user_id", user.user.id)
+  // In a real implementation, fetch actual data from the backend
+  // For now, we'll use sample data
+  const enrollments = [
+    {
+      enrollment_id: 1,
+      user_id: user.userId,
+      room_id: 101,
+      joined_at: "2025-01-15T10:00:00Z",
+      rooms: {
+        name: "Kelas Hijaiyah A",
+        description: "Kelas dasar membaca huruf hijaiyah",
+        code: "KHJ-A-2025"
+      }
+    },
+    {
+      enrollment_id: 2,
+      user_id: user.userId,
+      room_id: 102,
+      joined_at: "2025-01-20T10:00:00Z",
+      rooms: {
+        name: "Kelas Hijaiyah B",
+        description: "Kelas lanjutan huruf hijaiyah",
+        code: "KHJ-B-2025"
+      }
+    }
+  ]
 
-  // Get student's progress
-  const { data: letterProgress } = await supabase.from("user_letter_progress").select("*").eq("user_id", user.user.id)
+  // Sample progress data
+  const letterProgress = [
+    { status: "selesai" },
+    { status: "selesai" },
+    { status: "belajar" },
+    { status: "belajar" }
+  ]
 
-  // Get student's test results
-  const { data: testResults } = await supabase.from("letter_tests").select("*").eq("user_id", user.user.id)
+  // Sample test results
+  const testResults = [
+    { status: "lulus", score: 85 },
+    { status: "lulus", score: 90 },
+    { status: "tidak-lulus", score: 60 }
+  ]
 
   const totalProgress = letterProgress?.length || 0
   const completedProgress = letterProgress?.filter((p) => p.status === "selesai").length || 0
@@ -51,7 +109,7 @@ export default async function MuridDashboardPage() {
             <BookOpen className="h-8 w-8 text-white" />
             <div>
               <h1 className="text-xl font-bold text-white">Dashboard Murid</h1>
-              <p className="text-sm text-gray-200">Selamat datang, {user.user.user_metadata?.name}</p>
+              <p className="text-sm text-gray-200">Selamat datang, {user.name}</p>
             </div>
           </div>
           <div className="flex items-center space-x-4">

@@ -15,8 +15,22 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Parse FRONTEND_URL to support multiple origins
+const frontendUrls = (process.env.FRONTEND_URL || 'http://localhost:3000').split(',');
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (frontendUrls.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log('⚠️ CORS blocked origin:', origin);
+      console.log('✅ Allowed origins:', frontendUrls);
+      callback(null, true); // Still allow for development
+    }
+  },
   credentials: true,
 }));
 

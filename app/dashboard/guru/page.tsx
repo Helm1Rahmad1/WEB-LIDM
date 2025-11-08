@@ -1,67 +1,64 @@
-import { redirect } from "next/navigation"
-// import { createClient } from "@/lib/supabase/server"
+"use client"
+
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/hooks/useAuth"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Users, BookOpen, Award, Plus, Settings, TrendingUp, ArrowRight, Sparkles, Target, BarChart3, LogOut } from "lucide-react"
 import Link from "next/link"
 
-export default async function GuruDashboardPage() {
-  // ---------------------------------------------------------------------------
-  // NOTE: Original implementation used Supabase to authenticate the user and
-  // fetch rooms/enrollments. To avoid real DB reads/writes in dev/preview, that
-  // code is commented out below and replaced with hardcoded sample data.
-  // ---------------------------------------------------------------------------
+export default function GuruDashboardPage() {
+  const { user, loading } = useAuth()
+  const router = useRouter()
 
-  // const supabase = await createClient()
-
-  // const { data: user, error } = await supabase.auth.getUser()
-  // if (error || !user?.user) {
-  //   redirect("/auth/login")
-  // }
-
-  // // Check if user is guru
-  // const userRole = user.user.user_metadata?.role
-  // if (userRole !== "guru") {
-  //   redirect("/dashboard/murid")
-  // }
-
-  // // Get teacher's rooms
-  // const { data: rooms } = await supabase
-  //   .from("rooms")
-  //   .select(`
-  //     *,
-  //     enrollments(count)
-  //   `)
-  //   .eq("created_by", user.user.id)
-
-  // // Get total students across all rooms
-  // const { count: totalStudents } = await supabase
-  //   .from("enrollments")
-  //   .select("*", { count: "exact", head: true })
-  //   .in("room_id", rooms?.map((room) => room.room_id) || [])
-
-  // ---------------------------------------------------------------------------
-  // Hardcoded sample user and rooms (safe — no DB access).
-  // Adjust values as needed for development or UI preview.
-  // ---------------------------------------------------------------------------
-
-  const user = {
-    user: {
-      id: "guru-uuid-1",
-      user_metadata: {
-        role: "guru",
-        name: "Helmi Rahmadi"
+  // Require user to be authenticated as a guru
+  useEffect(() => {
+    console.log('🔍 Guru Dashboard - loading:', loading, 'user:', user?.email, 'role:', user?.role)
+    
+    if (!loading) {
+      if (!user) {
+        console.log('❌ No user, redirecting to login')
+        router.replace('/auth/login')
+        return
       }
+      
+      if (user.role !== 'guru') {
+        console.log('❌ Wrong role, redirecting to appropriate dashboard')
+        router.replace(`/dashboard/${user.role}`)
+        return
+      }
+      
+      console.log('✅ Guru dashboard access granted for:', user.email)
     }
+  }, [user, loading, router])
+
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#147E7E] border-t-transparent mb-4"></div>
+          <p className="text-lg text-[#2C3E50] font-medium">Memuat...</p>
+        </div>
+      </div>
+    )
   }
 
+  // Redirect if not authorized (will be handled by useEffect)
+  if (!user || user.role !== 'guru') {
+    return null
+  }
+
+  // In a real implementation, fetch actual data from the backend
+  // For now, we'll use sample data
   const rooms = [
     {
       room_id: 101,
       name: "Kelas Hijaiyah A",
       code: "KHJ-A-2025",
       description: "Kelas dasar membaca huruf hijaiyah",
-      created_by: user.user.id,
+      created_by: user.userId,
       enrollments: [{ count: 12 }]
     },
     {
@@ -69,7 +66,7 @@ export default async function GuruDashboardPage() {
       name: "Kelas Hijaiyah B",
       code: "KHJ-B-2025",
       description: "Kelas lanjutan huruf hijaiyah",
-      created_by: user.user.id,
+      created_by: user.userId,
       enrollments: [{ count: 8 }]
     },
     {
@@ -77,15 +74,12 @@ export default async function GuruDashboardPage() {
       name: "Kelas Tahsin",
       code: "TSN-2025",
       description: "Latihan pengucapan dan tajwid",
-      created_by: user.user.id,
+      created_by: user.userId,
       enrollments: [{ count: 15 }]
     }
   ]
 
   const totalStudents = rooms.reduce((sum, r) => sum + (r.enrollments?.[0]?.count || 0), 0)
-
-  // If you want to simulate unauthenticated access during dev, uncomment:
-  // redirect("/auth/login")
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#D5DBDB] via-[#D5DBDB] to-[#c8d0d0] relative overflow-hidden">

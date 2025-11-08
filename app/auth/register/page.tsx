@@ -1,8 +1,6 @@
 "use client"
 
 import type React from "react"
-
-import { authApi } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,8 +10,10 @@ import { BookOpen, Mail, Lock, User, UserCheck, ArrowRight, AlertCircle } from "
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function RegisterPage() {
+  const { register } = useAuth()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -35,7 +35,7 @@ export default function RegisterPage() {
     }
 
     try {
-      await authApi.register({ name, email, password, role })
+      await register({ name, email, password, role: role })
       router.push("/auth/register-success")
     } catch (error: any) {
       setError(error.response?.data?.error || "Terjadi kesalahan saat registrasi")

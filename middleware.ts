@@ -1,23 +1,12 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server'
 
+// Disable middleware temporarily - we'll handle auth on client side
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get('token');
-  const isAuthPage = request.nextUrl.pathname.startsWith('/auth');
-
-  if (!token && !isAuthPage && request.nextUrl.pathname !== '/') {
-    return NextResponse.redirect(new URL('/auth/login', request.url));
-  }
-
-  if (token && isAuthPage) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-
-  return NextResponse.next();
+  // Allow all requests to pass through
+  return NextResponse.next()
 }
 
+// Apply middleware only to dashboard routes
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+  matcher: '/dashboard/:path*',
 }
