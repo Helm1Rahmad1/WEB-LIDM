@@ -5,40 +5,45 @@ services:
     image: postgres:15-alpine
     container_name: lidm-postgres-docker
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: lidm
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-lidm}
     ports:
-      - "5433:5432"
+      - "${POSTGRES_EXTERNAL_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts:/docker-entrypoint-initdb.d
     networks:
       - lidm-network
+    restart: unless-stopped
 
   backend:
-    build: ./backend
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: lidm-backend
     environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: lidm
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      JWT_SECRET: lidm-jwt-secret-key-change-this-in-production-2024
-      PORT: 3001
-      # Accept requests from both localhost and frontend container
-      FRONTEND_URL: http://localhost:3000,http://lidm-frontend:3000
-      NODE_ENV: development
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-lidm}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-lidm-jwt-secret-key-change-this-in-production-2024}
+      PORT: ${BACKEND_PORT:-3001}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      NODE_ENV: ${NODE_ENV:-production}
       # Email Configuration
-      SMTP_HOST: smtp.gmail.com
-      SMTP_PORT: 587
-      SMTP_USER: juarasatulidm2025@gmail.com
-      SMTP_PASS: rsrl jlfq valq oojm
-      FROM_EMAIL: juarasatulidm2025@gmail.com
-      FROM_NAME: Sign Quran
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      FROM_EMAIL: ${FROM_EMAIL}
+      FROM_NAME: ${FROM_NAME:-Sign Quran}
+      # Domain Configuration
+      DOMAIN: ${DOMAIN:-localhost}
+      PROTOCOL: ${PROTOCOL:-http}
     ports:
-      - "3001:3001"
+      - "${BACKEND_PORT:-3001}:${BACKEND_PORT:-3001}"
     depends_on:
       - postgres
     networks:
@@ -46,11 +51,17 @@ services:
     restart: unless-stopped
 
   frontend:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
     container_name: lidm-frontend
     environment:
-      # Browser will use localhost (since it's accessed from host machine)
-      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      NODE_ENV: ${NODE_ENV:-production}
     ports:
       - "3000:3000"
     depends_on:
