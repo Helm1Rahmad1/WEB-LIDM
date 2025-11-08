@@ -1,5 +1,4 @@
 "use client"
-
 import type React from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -36,6 +35,26 @@ export default function RegisterPage() {
 
     try {
       await register({ name, email, password, role: role })
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          role,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Terjadi kesalahan')
+      }
+
+      // Registrasi berhasil
       router.push("/auth/register-success")
     } catch (error: any) {
       setError(error.response?.data?.error || "Terjadi kesalahan saat registrasi")

@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Use internal backend URL for server-side API calls
-    const backendUrl = process.env.INTERNAL_API_URL || 'http://localhost:3001';
+    const backendUrl = process.env.INTERNAL_API_URL || 'https://signquran.site/api';
     const url = `${backendUrl}/auth/resend-verification`;
 
     console.log('Backend URL:', url);

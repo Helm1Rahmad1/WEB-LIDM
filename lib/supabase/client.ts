@@ -1,17 +1,12 @@
-// Dummy file to replace Supabase client
-export const createClient = () => {
-  return {
-    auth: {
-      getUser: () => Promise.resolve({ data: { user: null }, error: new Error("Not implemented") })
-    },
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          single: () => Promise.resolve({ data: null, error: new Error("Not implemented") })
-        })
-      }),
-      insert: () => Promise.resolve({ data: null, error: new Error("Not implemented") }),
-      upsert: () => Promise.resolve({ data: null, error: new Error("Not implemented") })
-    })
+import { createBrowserClient } from "@supabase/ssr"
+
+export function createClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables")
   }
+
+  return createBrowserClient(supabaseUrl, supabaseAnonKey)
 }
