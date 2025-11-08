@@ -10,8 +10,11 @@ out
 build
 
 # Environment files (will be passed via docker-compose)
+.env
 .env.local
 .env.development
+.env.production
+.env.server
 .env*.local
 
 # Git
@@ -34,3 +37,36 @@ coverage
 *.log
 .cache
 dist
+
+# Backend folder (has its own Dockerfile)
+backend
+
+# Nginx and server configs
+nginx.conf
+sites-enabled
+sites-available
+
+# Scripts
+*.sh
+deploy.bat
+setup-vps.sh
+
+# Documentation
+*.md
+!README.md
+
+# Temporary files
+CACHED
+ERROR
+11.6.2
+[frontend
+test-backend.js
+email-test.html
+middleware.ts.backup
+
+# Lock files (except the one we use)
+pnpm-lock.yaml
+
+# SQL files
+*.sql
+export.sql
