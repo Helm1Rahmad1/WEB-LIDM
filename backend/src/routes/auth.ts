@@ -83,7 +83,7 @@ router.get('/verify-email', async (req, res) => {
 
     // Update user as verified
     await pool.query(
-      'UPDATE users SET email_verified = true, verification_token = NULL, verification_expires = NULL WHERE user_id = $1',
+      'UPDATE users SET is_verified = true, verification_token = NULL, verification_expires = NULL WHERE user_id = $1',
       [user.user_id]
     );
 
@@ -119,7 +119,7 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    console.log('✅ User found:', user.email, 'Verified:', user.email_verified);
+    console.log('✅ User found:', user.email, 'Verified:', user.is_verified);
 
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
@@ -130,7 +130,7 @@ router.post('/login', async (req, res) => {
     console.log('✅ Password valid');
 
     // Check if email is verified
-    if (!user.email_verified) {
+    if (!user.is_verified) {
       console.log('❌ Email not verified:', email);
       return res.status(403).json({ 
         error: 'Please verify your email before logging in. Check your email for the verification link.',
@@ -192,10 +192,10 @@ router.post('/resend-verification', async (req, res) => {
     }
 
     const user = result.rows[0];
-    console.log('✅ User found:', user.name, 'verified:', user.email_verified);
+    console.log('✅ User found:', user.name, 'verified:', user.is_verified);
 
     // Check if already verified
-    if (user.email_verified) {
+    if (user.is_verified) {
       console.log('❌ Email already verified');
       return res.status(400).json({ error: 'Email is already verified' });
     }
