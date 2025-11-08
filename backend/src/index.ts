@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
 
 import authRoutes from './routes/auth';
 import roomsRoutes from './routes/rooms';
@@ -36,6 +38,12 @@ app.use(cors({
 
 app.use(express.json());
 app.use(cookieParser());
+
+// Swagger UI Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customSiteTitle: 'SignQuran API Documentation',
+  customCss: '.swagger-ui .topbar { display: none }',
+}));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomsRoutes);
