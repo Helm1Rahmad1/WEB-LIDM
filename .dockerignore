@@ -15,7 +15,7 @@ build
 .env.development
 .env.production
 .env.server
-.env*.local
+.env.example
 
 # Git
 .git
@@ -43,8 +43,6 @@ backend
 
 # Nginx and server configs
 nginx.conf
-sites-enabled
-sites-available
 
 # Scripts
 *.sh
@@ -52,21 +50,22 @@ deploy.bat
 setup-vps.sh
 
 # Documentation
-*.md
-!README.md
+DEPLOYMENT.md
+QUICKSTART.md
+FIX-BUILD-ERROR.md
+QUICK-FIX.md
 
 # Temporary files
 CACHED
 ERROR
-11.6.2
-[frontend
 test-backend.js
 email-test.html
 middleware.ts.backup
 
-# Lock files (except the one we use)
+# Lock files (only use npm)
 pnpm-lock.yaml
 
-# SQL files
+# SQL and database files
 *.sql
 export.sql
+scripts
