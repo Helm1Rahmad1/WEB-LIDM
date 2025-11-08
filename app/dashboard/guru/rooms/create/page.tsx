@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
+import apiClient from "@/lib/api-client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -29,24 +29,20 @@ export default function CreateRoomPage() {
     setIsLoading(true)
     setError(null)
 
-    const supabase = createClient()
-
     try {
-      const { data: user } = await supabase.auth.getUser()
-      if (!user.user) throw new Error("User not authenticated")
-
       const roomCode = generateRoomCode()
 
-      const { error } = await supabase.from("rooms").insert({
+      const response = await apiClient.post("/api/rooms", {
         name,
         description,
         code: roomCode,
-        created_by: user.user.id,
       })
 
-      if (error) throw error
-
-      router.push("/dashboard/guru")
+      if (response.data.success) {
+        router.push("/dashboard/guru")
+      } else {
+        throw new Error("Failed to create room")
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "Terjadi kesalahan")
     } finally {

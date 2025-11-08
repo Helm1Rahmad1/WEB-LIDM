@@ -1,5 +1,17 @@
-import { createBrowserClient } from "@supabase/ssr"
-
-export function createClient() {
-  return createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+// Dummy file to replace Supabase client
+export const createClient = () => {
+  return {
+    auth: {
+      getUser: () => Promise.resolve({ data: { user: null }, error: new Error("Not implemented") })
+    },
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          single: () => Promise.resolve({ data: null, error: new Error("Not implemented") })
+        })
+      }),
+      insert: () => Promise.resolve({ data: null, error: new Error("Not implemented") }),
+      upsert: () => Promise.resolve({ data: null, error: new Error("Not implemented") })
+    })
+  }
 }

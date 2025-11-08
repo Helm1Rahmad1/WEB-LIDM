@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
+import apiClient from "@/lib/api-client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -25,49 +25,25 @@ export default function JoinClassPage() {
     setError(null)
     setSuccess(null)
 
-    const supabase = createClient()
-
     try {
-      const { data: user } = await supabase.auth.getUser()
-      if (!user.user) throw new Error("User not authenticated")
-
-      // Find room by code
-      const { data: room, error: roomError } = await supabase
-        .from("rooms")
-        .select("*")
-        .eq("code", classCode.toUpperCase())
-        .single()
-
-      if (roomError || !room) {
-        throw new Error("Kode kelas tidak ditemukan")
-      }
-
-      // Check if already enrolled
-      const { data: existingEnrollment } = await supabase
-        .from("enrollments")
-        .select("*")
-        .eq("user_id", user.user.id)
-        .eq("room_id", room.room_id)
-        .single()
-
-      if (existingEnrollment) {
-        throw new Error("Anda sudah bergabung dengan kelas ini")
-      }
-
-      // Join the class
-      const { error: enrollError } = await supabase.from("enrollments").insert({
-        user_id: user.user.id,
-        room_id: room.room_id,
+      const response = await apiClient.post("/api/rooms/join", {
+        code: classCode.toUpperCase(),
       })
 
-      if (enrollError) throw enrollError
-
-      setSuccess(`Berhasil bergabung dengan kelas "${room.name}"!`)
-      setTimeout(() => {
-        router.push("/dashboard/murid")
-      }, 2000)
+      if (response.data.success) {
+        setSuccess("Berhasil bergabung dengan kelas!")
+        setTimeout(() => {
+          router.push("/dashboard/murid")
+        }, 2000)
+      } else {
+        throw new Error(response.data.error || "Gagal bergabung dengan kelas")
+      }
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Terjadi kesalahan")
+      if (error instanceof Error) {
+        setError(error.message)
+      } else {
+        setError("Terjadi kesalahan")
+      }
     } finally {
       setIsLoading(false)
     }

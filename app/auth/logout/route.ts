@@ -1,12 +1,13 @@
-import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient()
-  
-  // Sign out the user
-  await supabase.auth.signOut()
-  
-  // Redirect to the home page
-  return NextResponse.redirect(new URL('/', request.url))
+  const response = NextResponse.redirect(new URL('/', request.url))
+  response.cookies.delete('token')
+  return response
+}
+
+export async function GET(request: NextRequest) {
+  const response = NextResponse.redirect(new URL('/', request.url))
+  response.cookies.delete('token')
+  return response
 }

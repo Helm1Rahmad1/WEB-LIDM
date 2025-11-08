@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { createClient } from "@/lib/supabase/client"
+import { authApi } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -21,21 +21,14 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-      if (error) throw error
-
-      // Redirect based on user role - we'll implement this after getting user data
+      const data = await authApi.login(email, password)
       router.push("/dashboard")
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Terjadi kesalahan")
+    } catch (error: any) {
+      setError(error.response?.data?.error || "Terjadi kesalahan saat login")
     } finally {
       setIsLoading(false)
     }
