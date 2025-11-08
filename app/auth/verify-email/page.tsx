@@ -26,7 +26,7 @@ function VerifyEmailContent() {
 
       try {
         // Use environment variable for API URL
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://signquran.site/api'}/api/auth/verify-email?token=${token}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://signquran.site'}/api/auth/verify-email?token=${token}`, {
           method: 'GET',
         })
 
@@ -58,7 +58,7 @@ function VerifyEmailContent() {
     setIsResending(true)
     try {
       // Use environment variable for API URL
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://signquran.site/api'}/api/auth/resend-verification`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://signquran.site'}/api/auth/resend-verification`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

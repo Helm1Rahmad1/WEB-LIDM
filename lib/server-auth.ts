@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 
 // This function checks if the user is authenticated by making an API call to the backend
 export async function isAuthenticated(): Promise<boolean> {
-  const token = cookies().get('token')?.value
+  const token = (await cookies()).get('token')?.value
   
   if (!token) {
     return false
@@ -13,7 +13,7 @@ export async function isAuthenticated(): Promise<boolean> {
 
   try {
     // Make a server-side API call to validate the token
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://signquran.site/api'}/api/auth/me`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://signquran.site'}/api/auth/me`, {
       headers: {
         'Cookie': `token=${token}`,
       },
@@ -37,7 +37,7 @@ export async function getCurrentUser() {
 
   try {
     // Make a server-side API call to get user info
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://signquran.site/api'}/api/auth/me`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://signquran.site'}/api/auth/me`, {
       headers: {
         'Cookie': `token=${token}`,
       },

@@ -55,7 +55,7 @@ export default function LoginPage() {
     setIsResendingVerification(true)
     try {
       // Use the unified API client instead of direct fetch
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://signquran.site/api'}/api/auth/resend-verification`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://signquran.site'}/api/auth/resend-verification`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
