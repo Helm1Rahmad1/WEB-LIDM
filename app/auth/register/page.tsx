@@ -1,8 +1,5 @@
 "use client"
-
 import type React from "react"
-
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -25,7 +22,6 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
@@ -36,27 +32,26 @@ export default function RegisterPage() {
     }
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { name, role }, // metadata
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      })
-      
-      if (error) throw error
-      
-      // setelah signup sukses, simpan juga ke tabel users custom
-      if (data.user) {
-        await supabase.from("users").insert({
-          user_id: data.user.id,   // UUID dari Supabase Auth
+        body: JSON.stringify({
           name,
           email,
+          password,
           role,
-        })
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Terjadi kesalahan')
       }
-      
-      if (error) throw error
+
+      // Registrasi berhasil
       router.push("/auth/register-success")
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "Terjadi kesalahan")
