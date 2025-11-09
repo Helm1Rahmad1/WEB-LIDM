@@ -13,7 +13,7 @@ export async function isAuthenticated(): Promise<boolean> {
 
   try {
     // Make a server-side API call to validate the token
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/auth/me`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://signquran.site/api'}/api/auth/me`, {
       headers: {
         'Cookie': `token=${token}`,
       },
@@ -37,7 +37,7 @@ export async function getCurrentUser() {
 
   try {
     // Make a server-side API call to get user info
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/auth/me`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://signquran.site/api'}/api/auth/me`, {
       headers: {
         'Cookie': `token=${token}`,
       },
