@@ -7,6 +7,15 @@ const router = express.Router();
 
 router.use(authenticateToken);
 
+/**
+ * @swagger
+ * /api/users:
+ *   get:
+ *     summary: Get all users (guru)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/', requireRole(['guru']), async (req: AuthRequest, res) => {
   try {
     const { role, search, limit = '50', offset = '0' } = req.query;
@@ -50,6 +59,15 @@ router.get('/', requireRole(['guru']), async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   get:
+ *     summary: Get user by ID
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/:id', async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -76,6 +94,15 @@ router.get('/:id', async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   put:
+ *     summary: Update user profile
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.put('/:id', async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -140,6 +167,15 @@ router.put('/:id', async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/users/{id}/password:
+ *   put:
+ *     summary: Change user password
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.put('/:id/password', async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -179,6 +215,15 @@ router.put('/:id/password', async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/users/{id}:
+ *   delete:
+ *     summary: Delete user (guru)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.delete('/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;

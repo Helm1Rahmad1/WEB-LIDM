@@ -6,6 +6,15 @@ const router = express.Router();
 
 router.use(authenticateToken);
 
+/**
+ * @swagger
+ * /api/jilid-letters:
+ *   get:
+ *     summary: Get jilid letters mapping
+ *     tags: [Jilid]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/', async (req, res) => {
   try {
     const { jilidId } = req.query;
@@ -34,6 +43,15 @@ router.get('/', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/jilid-letters/{id}:
+ *   get:
+ *     summary: Get jilid letter by ID
+ *     tags: [Jilid]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -58,6 +76,15 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/jilid-letters:
+ *   post:
+ *     summary: Add letter to jilid (guru)
+ *     tags: [Jilid]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.post('/', requireRole(['guru']), async (req: AuthRequest, res) => {
   try {
     const { jilidId, hijaiyahId, sortOrder } = req.body;
@@ -97,6 +124,15 @@ router.post('/', requireRole(['guru']), async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/jilid-letters/{id}:
+ *   put:
+ *     summary: Update jilid letter (guru)
+ *     tags: [Jilid]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.put('/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -152,6 +188,15 @@ router.put('/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/jilid-letters/{id}:
+ *   delete:
+ *     summary: Remove letter from jilid (guru)
+ *     tags: [Jilid]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.delete('/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;

@@ -6,6 +6,15 @@ const router = express.Router();
 
 router.use(authenticateToken);
 
+/**
+ * @swagger
+ * /api/hijaiyah:
+ *   get:
+ *     summary: Get all hijaiyah letters
+ *     tags: [Hijaiyah]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM hijaiyah ORDER BY ordinal');
@@ -16,6 +25,15 @@ router.get('/', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/hijaiyah/{id}:
+ *   get:
+ *     summary: Get hijaiyah letter by ID
+ *     tags: [Hijaiyah]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -32,6 +50,15 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/hijaiyah:
+ *   post:
+ *     summary: Create new hijaiyah letter (guru)
+ *     tags: [Hijaiyah]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.post('/', requireRole(['guru']), async (req: AuthRequest, res) => {
   try {
     const { latinName, arabicChar, ordinal } = req.body;
@@ -61,6 +88,15 @@ router.post('/', requireRole(['guru']), async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/hijaiyah/{id}:
+ *   put:
+ *     summary: Update hijaiyah letter (guru)
+ *     tags: [Hijaiyah]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.put('/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -117,6 +153,15 @@ router.put('/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/hijaiyah/{id}:
+ *   delete:
+ *     summary: Delete hijaiyah letter (guru)
+ *     tags: [Hijaiyah]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.delete('/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;

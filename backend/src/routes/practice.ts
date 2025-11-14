@@ -6,6 +6,15 @@ const router = express.Router();
 
 router.use(authenticateToken);
 
+/**
+ * @swagger
+ * /api/practice:
+ *   get:
+ *     summary: Get all practice sessions
+ *     tags: [Practice]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/', async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
@@ -54,6 +63,15 @@ router.get('/', async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/practice/{id}:
+ *   get:
+ *     summary: Get practice session by ID
+ *     tags: [Practice]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/:id', async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -86,6 +104,15 @@ router.get('/:id', async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/practice:
+ *   post:
+ *     summary: Submit practice result
+ *     tags: [Practice]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.post('/', async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
@@ -116,6 +143,15 @@ router.post('/', async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/practice/{id}:
+ *   put:
+ *     summary: Update practice session
+ *     tags: [Practice]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.put('/:id', async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -169,6 +205,15 @@ router.put('/:id', async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/practice/{id}:
+ *   delete:
+ *     summary: Delete practice session (guru)
+ *     tags: [Practice]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.delete('/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;

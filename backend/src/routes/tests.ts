@@ -6,6 +6,15 @@ const router = express.Router();
 
 router.use(authenticateToken);
 
+/**
+ * @swagger
+ * /api/tests:
+ *   get:
+ *     summary: Get all tests
+ *     tags: [Tests]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/', async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
@@ -57,6 +66,15 @@ router.get('/', async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/tests/{id}:
+ *   get:
+ *     summary: Get test by ID
+ *     tags: [Tests]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/:id', async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -90,6 +108,15 @@ router.get('/:id', async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/tests:
+ *   post:
+ *     summary: Submit test result
+ *     tags: [Tests]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.post('/', async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
@@ -123,6 +150,15 @@ router.post('/', async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/tests/{id}:
+ *   put:
+ *     summary: Update test (guru)
+ *     tags: [Tests]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.put('/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -170,6 +206,15 @@ router.put('/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/tests/{id}:
+ *   delete:
+ *     summary: Delete test
+ *     tags: [Tests]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.delete('/:id', async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;

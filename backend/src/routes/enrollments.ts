@@ -6,6 +6,15 @@ const router = express.Router();
 
 router.use(authenticateToken);
 
+/**
+ * @swagger
+ * /api/enrollments:
+ *   get:
+ *     summary: Get all enrollments
+ *     tags: [Enrollments]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/', async (req: AuthRequest, res) => {
   try {
     const { roomId, userId } = req.query;
@@ -50,6 +59,15 @@ router.get('/', async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/enrollments/{id}:
+ *   get:
+ *     summary: Get enrollment by ID
+ *     tags: [Enrollments]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/:id', async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -82,6 +100,15 @@ router.get('/:id', async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/enrollments:
+ *   post:
+ *     summary: Create enrollment
+ *     tags: [Enrollments]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.post('/', async (req: AuthRequest, res) => {
   try {
     const { userId, roomId } = req.body;
@@ -127,6 +154,15 @@ router.post('/', async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/enrollments/{id}:
+ *   delete:
+ *     summary: Delete enrollment
+ *     tags: [Enrollments]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.delete('/:id', async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;

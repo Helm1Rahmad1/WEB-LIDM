@@ -6,6 +6,15 @@ const router = express.Router();
 
 router.use(authenticateToken);
 
+/**
+ * @swagger
+ * /api/jilid:
+ *   get:
+ *     summary: Get all jilid
+ *     tags: [Jilid]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM jilid ORDER BY jilid_id');
@@ -16,6 +25,15 @@ router.get('/', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/jilid/{id}:
+ *   get:
+ *     summary: Get jilid by ID
+ *     tags: [Jilid]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -32,6 +50,15 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/jilid/{id}/letters:
+ *   get:
+ *     summary: Get letters in jilid
+ *     tags: [Jilid]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/:id/letters', async (req, res) => {
   try {
     const { id } = req.params;
@@ -51,6 +78,15 @@ router.get('/:id/letters', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/jilid:
+ *   post:
+ *     summary: Create new jilid (guru)
+ *     tags: [Jilid]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.post('/', requireRole(['guru']), async (req: AuthRequest, res) => {
   try {
     const { jilidName, description } = req.body;
@@ -71,6 +107,15 @@ router.post('/', requireRole(['guru']), async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/jilid/{id}:
+ *   put:
+ *     summary: Update jilid (guru)
+ *     tags: [Jilid]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.put('/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -112,6 +157,15 @@ router.put('/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/jilid/{id}:
+ *   delete:
+ *     summary: Delete jilid (guru)
+ *     tags: [Jilid]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.delete('/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;

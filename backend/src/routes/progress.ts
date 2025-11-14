@@ -6,6 +6,15 @@ const router = express.Router();
 
 router.use(authenticateToken);
 
+/**
+ * @swagger
+ * /api/progress/letter:
+ *   get:
+ *     summary: Get letter progress
+ *     tags: [Progress]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/letter', async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
@@ -54,6 +63,15 @@ router.get('/letter', async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/progress/letter/{id}:
+ *   get:
+ *     summary: Get letter progress by ID
+ *     tags: [Progress]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/letter/:id', async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -86,6 +104,15 @@ router.get('/letter/:id', async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/progress/jilid:
+ *   get:
+ *     summary: Get jilid progress
+ *     tags: [Progress]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/jilid', async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
@@ -134,6 +161,15 @@ router.get('/jilid', async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/progress/jilid/{id}:
+ *   get:
+ *     summary: Get jilid progress by ID
+ *     tags: [Progress]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.get('/jilid/:id', async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -166,6 +202,15 @@ router.get('/jilid/:id', async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/progress/letter:
+ *   post:
+ *     summary: Update letter progress
+ *     tags: [Progress]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.post('/letter', async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
@@ -191,6 +236,15 @@ router.post('/letter', async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/progress/letter/{id}:
+ *   put:
+ *     summary: Update letter progress status (guru)
+ *     tags: [Progress]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.put('/letter/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -216,6 +270,15 @@ router.put('/letter/:id', requireRole(['guru']), async (req: AuthRequest, res) =
   }
 });
 
+/**
+ * @swagger
+ * /api/progress/letter/{id}:
+ *   delete:
+ *     summary: Delete letter progress (guru)
+ *     tags: [Progress]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.delete('/letter/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -236,6 +299,15 @@ router.delete('/letter/:id', requireRole(['guru']), async (req: AuthRequest, res
   }
 });
 
+/**
+ * @swagger
+ * /api/progress/jilid:
+ *   post:
+ *     summary: Update jilid progress
+ *     tags: [Progress]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.post('/jilid', async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
@@ -261,6 +333,15 @@ router.post('/jilid', async (req: AuthRequest, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/progress/jilid/{id}:
+ *   put:
+ *     summary: Update jilid progress status (guru)
+ *     tags: [Progress]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.put('/jilid/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -286,6 +367,15 @@ router.put('/jilid/:id', requireRole(['guru']), async (req: AuthRequest, res) =>
   }
 });
 
+/**
+ * @swagger
+ * /api/progress/jilid/{id}:
+ *   delete:
+ *     summary: Delete jilid progress (guru)
+ *     tags: [Progress]
+ *     security:
+ *       - bearerAuth: []
+ */
 router.delete('/jilid/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
