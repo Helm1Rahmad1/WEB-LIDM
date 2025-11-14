@@ -11,6 +11,10 @@ import progressRoutes from './routes/progress';
 import testsRoutes from './routes/tests';
 import hijaiyahRoutes from './routes/hijaiyah';
 import jilidRoutes from './routes/jilid';
+import jilidLettersRoutes from './routes/jilid-letters';
+import usersRoutes from './routes/users';
+import enrollmentsRoutes from './routes/enrollments';
+import practiceRoutes from './routes/practice';
 
 dotenv.config();
 
@@ -51,6 +55,10 @@ app.use('/api/progress', progressRoutes);
 app.use('/api/tests', testsRoutes);
 app.use('/api/hijaiyah', hijaiyahRoutes);
 app.use('/api/jilid', jilidRoutes);
+app.use('/api/jilid-letters', jilidLettersRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api/enrollments', enrollmentsRoutes);
+app.use('/api/practice', practiceRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });

@@ -105,4 +105,129 @@ router.get('/:roomId/students', requireRole(['guru']), async (req: AuthRequest, 
   }
 });
 
+router.get('/:id', async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.userId;
+    const role = req.user!.role;
+
+    const result = await pool.query('SELECT * FROM rooms WHERE room_id = $1', [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Room not found' });
+    }
+
+    const room = result.rows[0];
+
+    if (role === 'murid') {
+      const enrollmentCheck = await pool.query(
+        'SELECT enrollment_id FROM enrollments WHERE user_id = $1 AND room_id = $2',
+        [userId, id]
+      );
+
+      if (enrollmentCheck.rows.length === 0) {
+        return res.status(403).json({ error: 'Not enrolled in this room' });
+      }
+    }
+
+    res.json({ room: room });
+  } catch (error) {
+    console.error('Get room error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.put('/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, code } = req.body;
+    const userId = req.user!.userId;
+
+    const roomCheck = await pool.query(
+      'SELECT created_by FROM rooms WHERE room_id = $1',
+      [id]
+    );
+
+    if (roomCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Room not found' });
+    }
+
+    if (roomCheck.rows[0].created_by !== userId) {
+      return res.status(403).json({ error: 'Not authorized to update this room' });
+    }
+
+    const updates: string[] = [];
+    const params: any[] = [];
+    let paramCount = 1;
+
+    if (name) {
+      updates.push(`name = $${paramCount}`);
+      params.push(name);
+      paramCount++;
+    }
+
+    if (description !== undefined) {
+      updates.push(`description = $${paramCount}`);
+      params.push(description);
+      paramCount++;
+    }
+
+    if (code) {
+      const codeCheck = await pool.query(
+        'SELECT room_id FROM rooms WHERE code = $1 AND room_id != $2',
+        [code, id]
+      );
+
+      if (codeCheck.rows.length > 0) {
+        return res.status(400).json({ error: 'Code already exists' });
+      }
+
+      updates.push(`code = $${paramCount}`);
+      params.push(code);
+      paramCount++;
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    params.push(id);
+    const query = `UPDATE rooms SET ${updates.join(', ')} WHERE room_id = $${paramCount} RETURNING *`;
+
+    const result = await pool.query(query, params);
+
+    res.json({ room: result.rows[0] });
+  } catch (error) {
+    console.error('Update room error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.delete('/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.userId;
+
+    const roomCheck = await pool.query(
+      'SELECT created_by FROM rooms WHERE room_id = $1',
+      [id]
+    );
+
+    if (roomCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Room not found' });
+    }
+
+    if (roomCheck.rows[0].created_by !== userId) {
+      return res.status(403).json({ error: 'Not authorized to delete this room' });
+    }
+
+    await pool.query('DELETE FROM rooms WHERE room_id = $1', [id]);
+
+    res.json({ message: 'Room deleted successfully' });
+  } catch (error) {
+    console.error('Delete room error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;

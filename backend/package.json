@@ -6,7 +6,12 @@
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test:db": "ts-node-dev --respawn=false src/test-db.ts"
+    "start:prod": "npm run build && node dist/index.js",
+    "test:db": "ts-node-dev --respawn=false src/test-db.ts",
+    "pm2:start": "pm2 start dist/index.js --name lidm-backend",
+    "pm2:stop": "pm2 stop lidm-backend",
+    "pm2:restart": "pm2 restart lidm-backend",
+    "pm2:delete": "pm2 delete lidm-backend"
   },
   "dependencies": {
     "@types/nodemailer": "^7.0.3",

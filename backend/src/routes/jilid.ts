@@ -1,6 +1,6 @@
 import express from 'express';
 import pool from '../config/database';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -47,6 +47,87 @@ router.get('/:id/letters', async (req, res) => {
     res.json({ letters: result.rows });
   } catch (error) {
     console.error('Get jilid letters error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/', requireRole(['guru']), async (req: AuthRequest, res) => {
+  try {
+    const { jilidName, description } = req.body;
+
+    if (!jilidName) {
+      return res.status(400).json({ error: 'jilidName is required' });
+    }
+
+    const result = await pool.query(
+      'INSERT INTO jilid (jilid_name, description) VALUES ($1, $2) RETURNING *',
+      [jilidName, description || null]
+    );
+
+    res.status(201).json({ jilid: result.rows[0] });
+  } catch (error) {
+    console.error('Create jilid error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.put('/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { jilidName, description } = req.body;
+
+    const updates: string[] = [];
+    const params: any[] = [];
+    let paramCount = 1;
+
+    if (jilidName) {
+      updates.push(`jilid_name = $${paramCount}`);
+      params.push(jilidName);
+      paramCount++;
+    }
+
+    if (description !== undefined) {
+      updates.push(`description = $${paramCount}`);
+      params.push(description);
+      paramCount++;
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    params.push(id);
+    const query = `UPDATE jilid SET ${updates.join(', ')} WHERE jilid_id = $${paramCount} RETURNING *`;
+
+    const result = await pool.query(query, params);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Jilid not found' });
+    }
+
+    res.json({ jilid: result.rows[0] });
+  } catch (error) {
+    console.error('Update jilid error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.delete('/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      'DELETE FROM jilid WHERE jilid_id = $1 RETURNING jilid_id',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Jilid not found' });
+    }
+
+    res.json({ message: 'Jilid deleted successfully' });
+  } catch (error) {
+    console.error('Delete jilid error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
