@@ -34,29 +34,11 @@ export default function RegisterPage() {
 
     try {
       await register({ name, email, password, role: role })
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-          role,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Terjadi kesalahan')
-      }
-
-      // Registrasi berhasil
+      
+      // Registrasi berhasil, redirect ke halaman sukses
       router.push("/auth/register-success")
     } catch (error: any) {
-      setError(error.response?.data?.error || "Terjadi kesalahan saat registrasi")
+      setError(error.message || "Terjadi kesalahan saat registrasi")
     } finally {
       setIsLoading(false)
     }
