@@ -6,6 +6,8 @@ File ini berisi template dokumentasi Swagger untuk routes yang belum didokumenta
 
 ## Progress Routes (`progress.ts`)
 
+tes misal
+
 Tambahkan di atas setiap endpoint:
 
 ```typescript
