@@ -7,30 +7,14 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted  # ← Pakai runner di server sendiri!
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.7.0
-        with:
-          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
-
-      - name: Deploy to VPS
+      - name: Deploy Application
         run: |
-          ssh -o StrictHostKeyChecking=no root@${{ secrets.VPS_HOST }} << 'EOF'
-          
-          echo ">>> Stop & remove old containers"
-          docker rm -f signquran_front_7fc9356 || true
-          docker rm -f signquran_api_7fc9356 || true
-
-          echo ">>> Build new images"
+          echo "Starting deployment..."
           cd /root/lombalidm2025
-          ./deploy.sh
-
-          echo ">>> Restart Nginx"
-          systemctl restart nginx
-
-          EOF
+          ./deploy-server.sh
