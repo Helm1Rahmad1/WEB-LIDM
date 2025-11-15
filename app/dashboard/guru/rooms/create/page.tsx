@@ -25,30 +25,37 @@ export default function CreateRoomPage() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError(null)
+  e.preventDefault()
+  setIsLoading(true)
+  setError(null)
 
-    try {
-      const roomCode = generateRoomCode()
+  try {
+    const roomCode = generateRoomCode()
 
-      const response = await apiClient.post("/api/rooms", {
-        name,
-        description,
-        code: roomCode,
-      })
+    const response = await apiClient.post("/api/rooms", {
+      name,
+      description,
+      code: roomCode,
+    })
 
-      if (response.data.success) {
-        router.push("/dashboard/guru")
-      } else {
-        throw new Error("Failed to create room")
-      }
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Terjadi kesalahan")
-    } finally {
-      setIsLoading(false)
+    // Backend mengembalikan { room: ... } dengan status 201
+    if (response.status === 201 && response.data.room) {
+      router.push("/dashboard/guru")
+    } else {
+      throw new Error(response.data?.error || "Failed to create room")
     }
+  } catch (error: any) {
+    if (error.response) {
+      // Error dari API (misal 403, 500, dsb)
+      setError(error.response.data?.error || "Terjadi kesalahan pada server")
+    } else {
+      setError(error.message || "Terjadi kesalahan")
+    }
+  } finally {
+    setIsLoading(false)
   }
+}
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#D5DBDB] via-[#D5DBDB] to-[#c8d0d0] relative overflow-hidden">
