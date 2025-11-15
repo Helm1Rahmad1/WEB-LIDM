@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { BookOpen, Mail, Lock, User, UserCheck, ArrowRight, AlertCircle } from "lucide-react"
+import { BookOpen, Mail, Lock, User, ArrowRight, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
@@ -17,7 +16,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-  const [role, setRole] = useState<"guru" | "murid">("murid")
+  const role = "guru" // Fixed role as guru
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
@@ -140,26 +139,6 @@ export default function RegisterPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     className="h-12 pl-4 pr-4 border-2 border-[#D5DBDB] focus:border-[#147E7E] focus:ring-2 focus:ring-[#147E7E]/20 transition-all duration-300 rounded-xl bg-white/50 backdrop-blur-sm hover:bg-white/80"
                   />
-                  <div className="absolute inset-0 rounded-xl border-2 border-transparent bg-gradient-to-r from-[#147E7E]/20 to-[#F1C40F]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
-                </div>
-              </div>
-
-              {/* Role Field */}
-              <div className="space-y-3">
-                <Label htmlFor="role" className="text-[#2C3E50] font-semibold flex items-center space-x-2">
-                  <UserCheck className="h-4 w-4 text-[#147E7E]" />
-                  <span>Peran</span>
-                </Label>
-                <div className="relative group">
-                  <Select value={role} onValueChange={(value: "guru" | "murid") => setRole(value)}>
-                    <SelectTrigger className="h-12 border-2 border-[#D5DBDB] focus:border-[#147E7E] focus:ring-2 focus:ring-[#147E7E]/20 transition-all duration-300 rounded-xl bg-white/50 backdrop-blur-sm hover:bg-white/80">
-                      <SelectValue placeholder="Pilih peran" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="murid">Murid</SelectItem>
-                      <SelectItem value="guru">Guru</SelectItem>
-                    </SelectContent>
-                  </Select>
                   <div className="absolute inset-0 rounded-xl border-2 border-transparent bg-gradient-to-r from-[#147E7E]/20 to-[#F1C40F]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
                 </div>
               </div>
