@@ -30,7 +30,7 @@ export default function JoinClassPage() {
         code: classCode.toUpperCase(),
       })
 
-      if (response.data.success) {
+      if (response.status === 200 && response.data?.message) {
         setSuccess("Berhasil bergabung dengan kelas!")
         setTimeout(() => {
           router.push("/dashboard/murid")
