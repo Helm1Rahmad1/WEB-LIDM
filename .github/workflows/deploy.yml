@@ -15,6 +15,8 @@ jobs:
 
       - name: Deploy Application
         run: |
-          echo "Starting deployment..."
-          cd /root/lombalidm2025
-          ./deploy-server.sh
+          echo "🚀 Starting deployment..."
+          
+          # Deployment script sudah ada di repo yang di-checkout oleh runner
+          chmod +x deploy-server.sh
+          sudo ./deploy-server.sh
