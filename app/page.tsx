@@ -67,7 +67,7 @@ export default function HomePage() {
             {/* Hero Badge */}
             <div className="inline-flex items-center space-x-2 bg-white/80 backdrop-blur-sm rounded-full px-6 py-3 mb-8 shadow-lg border border-white/20">
               <Eye className="h-5 w-5 text-[#147E7E]" />
-              <span className="font-semibold text-[#2C3E50]">Platform Pembelajaran Visual</span>
+              <span className="font-semibold text-[#2C3E50]">tes hehe Platform Pembelajaran Visual</span>
               <Sparkles className="h-4 w-4 text-[#F1C40F]" />
             </div>
 
