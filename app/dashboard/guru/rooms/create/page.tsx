@@ -38,10 +38,10 @@ export default function CreateRoomPage() {
         code: roomCode,
       })
 
-      if (response.status === 201 && response.data?.room) {
+      if (response.data.success) {
         router.push("/dashboard/guru")
       } else {
-        throw new Error("Terjadi kesalahan saat membuat kelas")
+        throw new Error("Failed to create room")
       }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "Terjadi kesalahan")
