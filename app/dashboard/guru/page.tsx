@@ -1,16 +1,19 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Users, BookOpen, Award, Plus, Settings, TrendingUp, ArrowRight, Sparkles, Target, BarChart3, LogOut } from "lucide-react"
 import Link from "next/link"
+import apiClient from "@/lib/api-client"
 
 export default function GuruDashboardPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const [rooms, setRooms] = useState<any[]>([])
+  const [loadingRooms, setLoadingRooms] = useState(true)
 
   // Require user to be authenticated as a guru
   useEffect(() => {
@@ -33,8 +36,29 @@ export default function GuruDashboardPage() {
     }
   }, [user, loading, router])
 
+  // Fetch rooms from API
+  useEffect(() => {
+    const fetchRooms = async () => {
+      if (!user || user.role !== 'guru') return
+      
+      try {
+        setLoadingRooms(true)
+        const response = await apiClient.get('/api/rooms')
+        console.log('✅ Rooms data:', response.data)
+        setRooms(response.data.rooms || [])
+      } catch (error) {
+        console.error('❌ Error fetching rooms:', error)
+        setRooms([])
+      } finally {
+        setLoadingRooms(false)
+      }
+    }
+
+    fetchRooms()
+  }, [user])
+
   // Show loading while checking auth
-  if (loading) {
+  if (loading || loadingRooms) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -50,36 +74,12 @@ export default function GuruDashboardPage() {
     return null
   }
 
-  // In a real implementation, fetch actual data from the backend
-  // For now, we'll use sample data
-  const rooms = [
-    {
-      room_id: 101,
-      name: "Kelas Hijaiyah A",
-      code: "KHJ-A-2025",
-      description: "Kelas dasar membaca huruf hijaiyah",
-      created_by: user.userId,
-      enrollments: [{ count: 12 }]
-    },
-    {
-      room_id: 102,
-      name: "Kelas Hijaiyah B",
-      code: "KHJ-B-2025",
-      description: "Kelas lanjutan huruf hijaiyah",
-      created_by: user.userId,
-      enrollments: [{ count: 8 }]
-    },
-    {
-      room_id: 103,
-      name: "Kelas Tahsin",
-      code: "TSN-2025",
-      description: "Latihan pengucapan dan tajwid",
-      created_by: user.userId,
-      enrollments: [{ count: 15 }]
-    }
-  ]
-
-  const totalStudents = rooms.reduce((sum, r) => sum + (r.enrollments?.[0]?.count || 0), 0)
+  // Calculate total students from actual rooms data
+  const totalStudents = rooms.reduce((sum, r) => {
+    // Count enrollments for each room
+    // Assuming enrollments is an array or count property
+    return sum + (r.student_count || 0)
+  }, 0)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#D5DBDB] via-[#D5DBDB] to-[#c8d0d0] relative overflow-hidden">

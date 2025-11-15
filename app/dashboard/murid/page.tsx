@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,10 +8,15 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { BookOpen, Users, Award, Plus, TrendingUp } from "lucide-react"
 import Link from "next/link"
+import apiClient from "@/lib/api-client"
 
 export default function MuridDashboardPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const [rooms, setRooms] = useState<any[]>([])
+  const [letterProgress, setLetterProgress] = useState<any[]>([])
+  const [testResults, setTestResults] = useState<any[]>([])
+  const [loadingData, setLoadingData] = useState(true)
 
   // Require user to be authenticated as a murid
   useEffect(() => {
@@ -34,8 +39,41 @@ export default function MuridDashboardPage() {
     }
   }, [user, loading, router])
 
-  // Show loading while checking auth
-  if (loading) {
+  // Fetch data from API
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user || user.role !== 'murid') return
+
+      try {
+        setLoadingData(true)
+
+        // Fetch rooms/enrollments
+        const roomsResponse = await apiClient.get('/api/rooms')
+        console.log('✅ Rooms data:', roomsResponse.data)
+        setRooms(roomsResponse.data.rooms || [])
+
+        // Fetch letter progress
+        const progressResponse = await apiClient.get('/api/progress/letter')
+        console.log('✅ Letter progress:', progressResponse.data)
+        setLetterProgress(progressResponse.data.progress || [])
+
+        // Fetch test results
+        const testsResponse = await apiClient.get('/api/tests')
+        console.log('✅ Tests data:', testsResponse.data)
+        setTestResults(testsResponse.data.tests || [])
+
+      } catch (error) {
+        console.error('❌ Error fetching data:', error)
+      } finally {
+        setLoadingData(false)
+      }
+    }
+
+    fetchData()
+  }, [user])
+
+  // Show loading while checking auth or fetching data
+  if (loading || loadingData) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -51,48 +89,7 @@ export default function MuridDashboardPage() {
     return null
   }
 
-  // In a real implementation, fetch actual data from the backend
-  // For now, we'll use sample data
-  const enrollments = [
-    {
-      enrollment_id: 1,
-      user_id: user.userId,
-      room_id: 101,
-      joined_at: "2025-01-15T10:00:00Z",
-      rooms: {
-        name: "Kelas Hijaiyah A",
-        description: "Kelas dasar membaca huruf hijaiyah",
-        code: "KHJ-A-2025"
-      }
-    },
-    {
-      enrollment_id: 2,
-      user_id: user.userId,
-      room_id: 102,
-      joined_at: "2025-01-20T10:00:00Z",
-      rooms: {
-        name: "Kelas Hijaiyah B",
-        description: "Kelas lanjutan huruf hijaiyah",
-        code: "KHJ-B-2025"
-      }
-    }
-  ]
-
-  // Sample progress data
-  const letterProgress = [
-    { status: "selesai" },
-    { status: "selesai" },
-    { status: "belajar" },
-    { status: "belajar" }
-  ]
-
-  // Sample test results
-  const testResults = [
-    { status: "lulus", score: 85 },
-    { status: "lulus", score: 90 },
-    { status: "tidak-lulus", score: 60 }
-  ]
-
+  // Calculate stats from real data
   const totalProgress = letterProgress?.length || 0
   const completedProgress = letterProgress?.filter((p) => p.status === "selesai").length || 0
   const completedTests = testResults?.filter((t) => t.status === "lulus").length || 0
@@ -143,7 +140,7 @@ export default function MuridDashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold" style={{ color: "#2C3E50" }}>
-                {enrollments?.length || 0}
+                {rooms?.length || 0}
               </div>
             </CardContent>
           </Card>
@@ -214,29 +211,29 @@ export default function MuridDashboardPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                {enrollments && enrollments.length > 0 ? (
+                {rooms && rooms.length > 0 ? (
                   <div className="space-y-4">
-                    {enrollments.map((enrollment) => (
-                      <Card key={enrollment.enrollment_id} className="border border-gray-200">
+                    {rooms.map((room) => (
+                      <Card key={room.room_id} className="border border-gray-200">
                         <CardContent className="p-4">
                           <div className="flex justify-between items-start">
                             <div className="flex-1">
                               <h3 className="font-semibold text-lg mb-1" style={{ color: "#2C3E50" }}>
-                                {enrollment.rooms?.name}
+                                {room.name}
                               </h3>
-                              <p className="text-sm text-gray-600 mb-3">{enrollment.rooms?.description}</p>
+                              <p className="text-sm text-gray-600 mb-3">{room.description}</p>
                               <div className="flex items-center space-x-4 text-xs text-gray-500">
-                                <span>Kode: {enrollment.rooms?.code}</span>
-                                <span>Bergabung {new Date(enrollment.joined_at).toLocaleDateString("id-ID")}</span>
+                                <span>Kode: {room.code}</span>
+                                <span>Guru: {room.guru_name}</span>
                               </div>
                             </div>
                             <div className="ml-4 space-y-2">
-                              <Link href={`/dashboard/murid/classes/${enrollment.room_id}/learn`}>
+                              <Link href={`/dashboard/murid/classes/${room.room_id}/learn`}>
                                 <Button size="sm" className="w-full text-white" style={{ backgroundColor: "#147E7E" }}>
                                   Belajar
                                 </Button>
                               </Link>
-                              <Link href={`/dashboard/murid/classes/${enrollment.room_id}/progress`}>
+                              <Link href={`/dashboard/murid/classes/${room.room_id}/progress`}>
                                 <Button size="sm" variant="outline" className="w-full bg-transparent">
                                   Progress
                                 </Button>

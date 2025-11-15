@@ -4,16 +4,14 @@ import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth'
 
 const router = express.Router();
 
-router.use(authenticateToken);
+// Public endpoints - no authentication required for GET requests
 
 /**
  * @swagger
  * /api/hijaiyah:
  *   get:
- *     summary: Get all hijaiyah letters
+ *     summary: Get all hijaiyah letters (public)
  *     tags: [Hijaiyah]
- *     security:
- *       - bearerAuth: []
  */
 router.get('/', async (req, res) => {
   try {
@@ -29,10 +27,8 @@ router.get('/', async (req, res) => {
  * @swagger
  * /api/hijaiyah/{id}:
  *   get:
- *     summary: Get hijaiyah letter by ID
+ *     summary: Get hijaiyah letter by ID (public)
  *     tags: [Hijaiyah]
- *     security:
- *       - bearerAuth: []
  */
 router.get('/:id', async (req, res) => {
   try {

@@ -4,16 +4,14 @@ import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth'
 
 const router = express.Router();
 
-router.use(authenticateToken);
+// Public endpoints - no authentication required for GET requests
 
 /**
  * @swagger
  * /api/jilid:
  *   get:
- *     summary: Get all jilid
+ *     summary: Get all jilid (public)
  *     tags: [Jilid]
- *     security:
- *       - bearerAuth: []
  */
 router.get('/', async (req, res) => {
   try {
@@ -29,10 +27,8 @@ router.get('/', async (req, res) => {
  * @swagger
  * /api/jilid/{id}:
  *   get:
- *     summary: Get jilid by ID
+ *     summary: Get jilid by ID (public)
  *     tags: [Jilid]
- *     security:
- *       - bearerAuth: []
  */
 router.get('/:id', async (req, res) => {
   try {
@@ -54,10 +50,8 @@ router.get('/:id', async (req, res) => {
  * @swagger
  * /api/jilid/{id}/letters:
  *   get:
- *     summary: Get letters in jilid
+ *     summary: Get letters in jilid (public)
  *     tags: [Jilid]
- *     security:
- *       - bearerAuth: []
  */
 router.get('/:id/letters', async (req, res) => {
   try {

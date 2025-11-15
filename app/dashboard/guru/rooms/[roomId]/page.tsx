@@ -1,114 +1,76 @@
-import { redirect } from "next/navigation"
-// import { createClient } from "@/lib/supabase/server"
+"use client"
+
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Users, Copy, BookOpen, Award, TrendingUp, Sparkles, Target, BarChart3, Settings, ArrowRight, Calendar, Clock } from "lucide-react"
 import Link from "next/link"
+import apiClient from "@/lib/api-client"
 
 interface Props {
   params: Promise<{ roomId: string }>
 }
 
-export default async function RoomDetailPage({ params }: Props) {
-  const { roomId } = await params
+export default function RoomDetailPage({ params }: Props) {
+  const router = useRouter()
+  const [roomId, setRoomId] = useState<string>("")
+  const [room, setRoom] = useState<any>(null)
+  const [students, setStudents] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // ---------------------------------------------------------------------------
-  // NOTE: The original implementation used Supabase to fetch the authenticated
-  // user, room details, students, and progress stats. To avoid performing any
-  // real database reads/writes while developing or previewing UI, that code is
-  // commented out below and replaced with hardcoded sample data. If you want
-  // to re-enable DB access later, uncomment the original lines.
-  // ---------------------------------------------------------------------------
+  // Unwrap params
+  useEffect(() => {
+    params.then(p => setRoomId(p.roomId))
+  }, [params])
 
-  // const supabase = await createClient()
+  // Fetch room and students data
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!roomId) return
 
-  // const { data: user, error } = await supabase.auth.getUser()
-  // if (error || !user?.user) {
-  //   redirect("/auth/login")
-  // }
+      try {
+        setLoading(true)
+        
+        // Fetch room details
+        const roomResponse = await apiClient.get(`/api/rooms/${roomId}`)
+        console.log('✅ Room data:', roomResponse.data)
+        setRoom(roomResponse.data.room)
 
-  // // Get room details
-  // const { data: room } = await supabase
-  //   .from("rooms")
-  //   .select("*")
-  //   .eq("room_id", roomId)
-  //   .eq("created_by", user.user.id)
-  //   .single()
+        // Fetch students in this room
+        const studentsResponse = await apiClient.get(`/api/rooms/${roomId}/students`)
+        console.log('✅ Students data:', studentsResponse.data)
+        setStudents(studentsResponse.data.students || [])
+        
+      } catch (error) {
+        console.error('❌ Error fetching data:', error)
+        // If room not found or not authorized, redirect
+        router.push('/dashboard/guru')
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  // if (!room) {
-  //   redirect("/dashboard/guru")
-  // }
+    fetchData()
+  }, [roomId, router])
 
-  // // Get students in this room
-  // const { data: students } = await supabase
-  //   .from("enrollments")
-  //   .select(`
-  //     *,
-  //     users(name, email)
-  //   `)
-  //   .eq("room_id", roomId)
-
-  // // Get progress statistics
-  // const { data: progressStats } = await supabase.from("user_letter_progress").select("status").eq("room_id", roomId)
-
-  // ---------------------------------------------------------------------------
-  // Hardcoded sample data (safe — no DB reads/writes). Adjust values as needed.
-  // ---------------------------------------------------------------------------
-
-  const room = {
-    room_id: Number(roomId || 1),
-    name: "Kelas Hijaiyah A",
-    code: "KHJ-2025",
-    description: "Kelas belajar huruf hijaiyah untuk pemula",
-    created_at: new Date().toISOString()
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#147E7E] border-t-transparent mb-4"></div>
+          <p className="text-lg text-[#2C3E50] font-medium">Memuat...</p>
+        </div>
+      </div>
+    )
   }
 
-  // Four sample students: Helmi, Egis, Hasbi, Azril
-  const students = [
-    {
-      enrollment_id: 1,
-      user_id: "user-helmi-uuid",
-      users: { name: "Helmi", email: "helmir@gmail.com" },
-      joined_at: "2025-08-01T10:00:00Z",
-      totalPages: 100,
-      totalCompletedPages: 7,
-      completedJilid: 0,
-      progressPercentage: 7
-    },
-    {
-      enrollment_id: 2,
-      user_id: "user-egis-uuid",
-      users: { name: "Egis", email: "egis@example.com" },
-      joined_at: "2025-07-15T09:30:00Z",
-      totalPages: 100,
-      totalCompletedPages: 12,
-      completedJilid: 1,
-      progressPercentage: 12
-    },
-    {
-      enrollment_id: 3,
-      user_id: "user-hasbi-uuid",
-      users: { name: "Hasbi", email: "hasbi@example.com" },
-      joined_at: "2025-06-10T11:20:00Z",
-      totalPages: 100,
-      totalCompletedPages: 20,
-      completedJilid: 2,
-      progressPercentage: 20
-    },
-    {
-      enrollment_id: 4,
-      user_id: "user-azril-uuid",
-      users: { name: "Azril", email: "azril@example.com" },
-      joined_at: "2025-08-05T14:45:00Z",
-      totalPages: 100,
-      totalCompletedPages: 5,
-      completedJilid: 0,
-      progressPercentage: 5
-    }
-  ]
+  if (!room) {
+    return null
+  }
 
-  // Compute progress stats from hardcoded students
+  // Compute progress stats from students data
   const totalProgress = students.reduce((sum, s) => sum + (s.totalPages || 0), 0)
   const completedProgress = students.reduce((sum, s) => sum + (s.totalCompletedPages || 0), 0)
 
