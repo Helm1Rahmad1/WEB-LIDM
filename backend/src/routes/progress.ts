@@ -396,4 +396,193 @@ router.delete('/jilid/:id', requireRole(['guru']), async (req: AuthRequest, res)
   }
 });
 
+/**
+ * @swagger
+ * /api/progress/halaman:
+ *   get:
+ *     summary: Get halaman (page) progress
+ *     tags: [Progress]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/halaman', async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.userId;
+    const userRole = req.user!.role;
+    const { targetUserId, status } = req.query;
+
+    let query = `
+      SELECT uhp.*, h.jilid_id, h.nomor_halaman, u.name as user_name
+      FROM user_halaman_progress uhp
+      LEFT JOIN halaman h ON CAST(h.halaman_id AS TEXT) = uhp.halaman_id
+      INNER JOIN users u ON uhp.user_id = u.user_id
+      WHERE 1=1
+    `;
+    const params: any[] = [];
+    let paramCount = 1;
+
+    if (userRole === 'murid') {
+      query += ` AND uhp.user_id = $${paramCount}`;
+      params.push(userId);
+      paramCount++;
+    } else if (targetUserId) {
+      query += ` AND uhp.user_id = $${paramCount}`;
+      params.push(targetUserId);
+      paramCount++;
+    }
+
+    if (status) {
+      query += ` AND uhp.status = $${paramCount}`;
+      params.push(status);
+      paramCount++;
+    }
+
+    query += ' ORDER BY uhp.last_update DESC';
+
+    const result = await pool.query(query, params);
+    res.json({ progress: result.rows });
+  } catch (error) {
+    console.error('Get halaman progress error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/progress/halaman/{id}:
+ *   get:
+ *     summary: Get halaman progress by ID
+ *     tags: [Progress]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/halaman/:id', async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user!.userId;
+    const userRole = req.user!.role;
+
+    const result = await pool.query(
+      `SELECT uhp.*, h.jilid_id, h.nomor_halaman, u.name as user_name
+       FROM user_halaman_progress uhp
+       LEFT JOIN halaman h ON CAST(h.halaman_id AS TEXT) = uhp.halaman_id
+       INNER JOIN users u ON uhp.user_id = u.user_id
+       WHERE uhp.user_halaman_id = $1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Halaman progress not found' });
+    }
+
+    const progress = result.rows[0];
+
+    if (userRole === 'murid' && progress.user_id !== userId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    res.json({ progress: progress });
+  } catch (error) {
+    console.error('Get halaman progress error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/progress/halaman:
+ *   post:
+ *     summary: Create or update halaman progress for the current user
+ *     tags: [Progress]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.post('/halaman', async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.userId;
+    const { halamanId, status } = req.body;
+
+    if (!halamanId || status === undefined) {
+      return res.status(400).json({ error: 'halamanId and status are required' });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO user_halaman_progress (user_id, halaman_id, status)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (user_id, halaman_id)
+       DO UPDATE SET status = $3, last_update = CURRENT_TIMESTAMP
+       RETURNING *`,
+      [userId, halamanId, status]
+    );
+
+    res.json({ progress: result.rows[0] });
+  } catch (error) {
+    console.error('Update halaman progress error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/progress/halaman/{id}:
+ *   put:
+ *     summary: Update halaman progress status (guru)
+ *     tags: [Progress]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.put('/halaman/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (status === undefined) {
+      return res.status(400).json({ error: 'status is required' });
+    }
+
+    const result = await pool.query(
+      'UPDATE user_halaman_progress SET status = $1, last_update = CURRENT_TIMESTAMP WHERE user_halaman_id = $2 RETURNING *',
+      [status, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Halaman progress not found' });
+    }
+
+    res.json({ progress: result.rows[0] });
+  } catch (error) {
+    console.error('Update halaman progress error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/progress/halaman/{id}:
+ *   delete:
+ *     summary: Delete halaman progress (guru)
+ *     tags: [Progress]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.delete('/halaman/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      'DELETE FROM user_halaman_progress WHERE user_halaman_id = $1 RETURNING user_halaman_id',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Halaman progress not found' });
+    }
+
+    res.json({ message: 'Halaman progress deleted successfully' });
+  } catch (error) {
+    console.error('Delete halaman progress error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;
