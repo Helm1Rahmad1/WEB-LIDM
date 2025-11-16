@@ -22,11 +22,29 @@ router.get('/debug/test-db', async (req, res) => {
     `);
     console.log('[debug] Enrollments table exists:', tableCheck.rows.length > 0);
     
-    // Test 3: Count enrollments
+    // Test 3: Check enrollments table structure
+    const structureCheck = await pool.query(`
+      SELECT column_name, data_type 
+      FROM information_schema.columns 
+      WHERE table_name = 'enrollments'
+      ORDER BY ordinal_position
+    `);
+    console.log('[debug] Enrollments columns:', structureCheck.rows);
+    
+    // Test 4: Check users table structure
+    const usersStructure = await pool.query(`
+      SELECT column_name, data_type 
+      FROM information_schema.columns 
+      WHERE table_name = 'users'
+      ORDER BY ordinal_position
+    `);
+    console.log('[debug] Users columns:', usersStructure.rows);
+    
+    // Test 5: Count enrollments
     const countResult = await pool.query('SELECT COUNT(*) as count FROM enrollments');
     console.log('[debug] Total enrollments:', countResult.rows[0].count);
     
-    // Test 4: Sample enrollment
+    // Test 6: Sample enrollment
     const sampleResult = await pool.query('SELECT * FROM enrollments LIMIT 1');
     console.log('[debug] Sample enrollment:', sampleResult.rows[0]);
     
@@ -34,6 +52,8 @@ router.get('/debug/test-db', async (req, res) => {
       success: true,
       currentTime: testQuery.rows[0].time,
       enrollmentsTableExists: tableCheck.rows.length > 0,
+      enrollmentsColumns: structureCheck.rows,
+      usersColumns: usersStructure.rows,
       totalEnrollments: countResult.rows[0].count,
       sampleEnrollment: sampleResult.rows[0] || null
     });
