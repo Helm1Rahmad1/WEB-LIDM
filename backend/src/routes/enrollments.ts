@@ -4,6 +4,49 @@ import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth'
 
 const router = express.Router();
 
+// Debug endpoint - test database connection (no auth required)
+router.get('/debug/test-db', async (req, res) => {
+  try {
+    console.log('[debug] Testing database connection...');
+    
+    // Test 1: Simple query
+    const testQuery = await pool.query('SELECT NOW() as time');
+    console.log('[debug] ✅ Basic query works');
+    
+    // Test 2: Check if enrollments table exists
+    const tableCheck = await pool.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_name = 'enrollments'
+    `);
+    console.log('[debug] Enrollments table exists:', tableCheck.rows.length > 0);
+    
+    // Test 3: Count enrollments
+    const countResult = await pool.query('SELECT COUNT(*) as count FROM enrollments');
+    console.log('[debug] Total enrollments:', countResult.rows[0].count);
+    
+    // Test 4: Sample enrollment
+    const sampleResult = await pool.query('SELECT * FROM enrollments LIMIT 1');
+    console.log('[debug] Sample enrollment:', sampleResult.rows[0]);
+    
+    res.json({
+      success: true,
+      currentTime: testQuery.rows[0].time,
+      enrollmentsTableExists: tableCheck.rows.length > 0,
+      totalEnrollments: countResult.rows[0].count,
+      sampleEnrollment: sampleResult.rows[0] || null
+    });
+  } catch (error) {
+    console.error('[debug] Database test failed:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+  }
+});
+
 router.use(authenticateToken);
 
 /**
