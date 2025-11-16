@@ -102,6 +102,121 @@ router.get('/:id', async (req: AuthRequest, res) => {
 
 /**
  * @swagger
+ * /api/enrollments/my-rooms:
+ *   get:
+ *     summary: Get all rooms that current user has joined
+ *     tags: [Enrollments]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of enrolled rooms
+ */
+router.get('/my-rooms', async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.userId;
+
+    const result = await pool.query(
+      `SELECT 
+        e.enrollment_id,
+        e.joined_at,
+        r.room_id,
+        r.name,
+        r.description,
+        r.code,
+        r.created_at,
+        u.name as created_by_name
+       FROM enrollments e
+       INNER JOIN rooms r ON e.room_id = r.room_id
+       INNER JOIN users u ON r.created_by = u.user_id
+       WHERE e.user_id = $1
+       ORDER BY e.joined_at DESC`,
+      [userId]
+    );
+
+    res.json({ rooms: result.rows });
+  } catch (error) {
+    console.error('Get my rooms error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/enrollments/join:
+ *   post:
+ *     summary: Join room by code
+ *     tags: [Enrollments]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               code:
+ *                 type: string
+ *                 description: Room code to join
+ *     responses:
+ *       201:
+ *         description: Successfully joined room
+ *       400:
+ *         description: Invalid code or already enrolled
+ *       404:
+ *         description: Room not found
+ */
+router.post('/join', async (req: AuthRequest, res) => {
+  try {
+    const { code } = req.body;
+    const userId = req.user!.userId;
+
+    if (!code) {
+      return res.status(400).json({ error: 'Room code is required' });
+    }
+
+    // Find room by code
+    const roomResult = await pool.query(
+      'SELECT room_id, name, description, code, created_by FROM rooms WHERE code = $1',
+      [code.toUpperCase()]
+    );
+
+    if (roomResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Room not found with this code' });
+    }
+
+    const room = roomResult.rows[0];
+
+    // Check if already enrolled
+    const existingEnrollment = await pool.query(
+      'SELECT enrollment_id FROM enrollments WHERE user_id = $1 AND room_id = $2',
+      [userId, room.room_id]
+    );
+
+    if (existingEnrollment.rows.length > 0) {
+      return res.status(400).json({ error: 'You are already enrolled in this room' });
+    }
+
+    // Create enrollment
+    const result = await pool.query(
+      'INSERT INTO enrollments (user_id, room_id) VALUES ($1, $2) RETURNING *',
+      [userId, room.room_id]
+    );
+
+    res.status(201).json({ 
+      message: 'Successfully joined room',
+      enrollment: result.rows[0],
+      room: room
+    });
+  } catch (error) {
+    console.error('Join room error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * @swagger
  * /api/enrollments:
  *   post:
  *     summary: Create enrollment
