@@ -173,6 +173,7 @@ router.get('/room/:roomId/members', async (req: AuthRequest, res) => {
 router.get('/my-rooms', async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
+    console.log('[my-rooms] Fetching rooms for user:', userId);
 
     const result = await pool.query(
       `SELECT 
@@ -192,9 +193,14 @@ router.get('/my-rooms', async (req: AuthRequest, res) => {
       [userId]
     );
 
+    console.log('[my-rooms] Found rooms:', result.rows.length);
     res.json({ rooms: result.rows });
   } catch (error) {
-    console.error('Get my rooms error:', error);
+    console.error('[my-rooms] Error details:', error);
+    if (error instanceof Error) {
+      console.error('[my-rooms] Error message:', error.message);
+      console.error('[my-rooms] Error stack:', error.stack);
+    }
     res.status(500).json({ error: 'Internal server error' });
   }
 });
