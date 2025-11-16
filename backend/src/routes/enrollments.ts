@@ -174,6 +174,20 @@ router.get('/my-rooms', async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
     console.log('[my-rooms] Fetching rooms for user:', userId);
+    console.log('[my-rooms] User type:', typeof userId);
+
+    // First check if user exists
+    const userCheck = await pool.query('SELECT user_id, name, email FROM users WHERE user_id = $1', [userId]);
+    console.log('[my-rooms] User check result:', userCheck.rows.length);
+    
+    if (userCheck.rows.length === 0) {
+      console.error('[my-rooms] User not found:', userId);
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check enrollments for this user
+    const enrollCheck = await pool.query('SELECT * FROM enrollments WHERE user_id = $1', [userId]);
+    console.log('[my-rooms] Enrollments found:', enrollCheck.rows.length);
 
     const result = await pool.query(
       `SELECT 
@@ -193,7 +207,7 @@ router.get('/my-rooms', async (req: AuthRequest, res) => {
       [userId]
     );
 
-    console.log('[my-rooms] Found rooms:', result.rows.length);
+    console.log('[my-rooms] Found rooms after JOIN:', result.rows.length);
     res.json({ rooms: result.rows });
   } catch (error) {
     console.error('[my-rooms] Error details:', error);
