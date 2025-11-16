@@ -490,6 +490,37 @@ router.get('/halaman/:id', async (req: AuthRequest, res) => {
 
 /**
  * @swagger
+ * /api/progress/halaman/by-jilid/{jilidId}:
+ *   get:
+ *     summary: Get all halaman progress for a jilid for current user
+ *     description: Get progress status for all pages in a jilid
+ *     tags: [Progress]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/halaman/by-jilid/:jilidId', async (req: AuthRequest, res) => {
+  try {
+    const { jilidId } = req.params;
+    const userId = req.user!.userId;
+
+    const result = await pool.query(
+      `SELECT uhp.halaman_id, uhp.status, uhp.last_update, h.nomor_halaman
+       FROM user_halaman_progress uhp
+       LEFT JOIN halaman h ON CAST(h.halaman_id AS TEXT) = uhp.halaman_id
+       WHERE uhp.user_id = $1 AND h.jilid_id = $2
+       ORDER BY h.nomor_halaman`,
+      [userId, jilidId]
+    );
+
+    res.json({ progress: result.rows });
+  } catch (error) {
+    console.error('Get halaman progress by jilid error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * @swagger
  * /api/progress/halaman/by-page/{halamanId}:
  *   get:
  *     summary: Get halaman progress by halaman_id for current user
