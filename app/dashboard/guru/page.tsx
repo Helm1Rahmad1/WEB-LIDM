@@ -76,9 +76,10 @@ export default function GuruDashboardPage() {
 
   // Calculate total students from actual rooms data
   const totalStudents = rooms.reduce((sum, r) => {
-    return sum + Number(r.student_count ?? 0)
+    // Count enrollments for each room
+    // Assuming enrollments is an array or count property
+    return sum + (r.student_count || 0)
   }, 0)
-  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#D5DBDB] via-[#D5DBDB] to-[#c8d0d0] relative overflow-hidden">
@@ -261,9 +262,7 @@ export default function GuruDashboardPage() {
                             </div>
                             <div className="flex items-center space-x-2 bg-[#F1C40F]/10 px-4 py-2 rounded-xl border border-[#F1C40F]/20">
                               <Users className="h-5 w-5 text-[#F1C40F]" />
-                              <<span className="font-bold text-[#2C3E50] text-lg">
-                                {room.student_count ?? 0}
-                              </span>
+                              <span className="font-bold text-[#2C3E50] text-lg">{room.enrollments?.[0]?.count || 0}</span>
                               <span className="text-sm text-[#2C3E50]/60 font-medium">murid</span>
                             </div>
                           </div>

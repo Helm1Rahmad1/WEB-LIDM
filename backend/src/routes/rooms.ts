@@ -33,33 +33,18 @@ router.get('/', async (req: AuthRequest, res) => {
     const userId = req.user!.userId;
     const role = req.user!.role;
 
-    let query: string;
-    let params: any[];
+    let query;
+    let params;
 
     if (role === 'guru') {
-      // Guru: ambil semua room yang dia buat + hitung jumlah murid
-      query = `
-        SELECT
-          r.*,
-          COUNT(e.enrollment_id)::int AS student_count
-        FROM rooms r
-        LEFT JOIN enrollments e ON r.room_id = e.room_id
-        WHERE r.created_by = $1
-        GROUP BY r.room_id
-        ORDER BY r.created_at DESC
-      `;
+      query = 'SELECT * FROM rooms WHERE created_by = $1 ORDER BY created_at DESC';
       params = [userId];
     } else {
-      // Murid: ambil room yang diikuti (boleh ada student_count juga)
       query = `
-        SELECT
-          r.*,
-          COUNT(e2.enrollment_id)::int AS student_count
-        FROM rooms r
-        INNER JOIN enrollments e ON r.room_id = e.room_id AND e.user_id = $1
-        LEFT JOIN enrollments e2 ON r.room_id = e2.room_id
-        GROUP BY r.room_id, e.joined_at
-        ORDER BY MAX(e.joined_at) DESC
+        SELECT r.* FROM rooms r
+        INNER JOIN enrollments e ON r.room_id = e.room_id
+        WHERE e.user_id = $1
+        ORDER BY e.joined_at DESC
       `;
       params = [userId];
     }
@@ -71,7 +56,6 @@ router.get('/', async (req: AuthRequest, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
 
 /**
  * @swagger
