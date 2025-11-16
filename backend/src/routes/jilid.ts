@@ -48,6 +48,31 @@ router.get('/:id', async (req, res) => {
 
 /**
  * @swagger
+ * /api/jilid/{id}/pages:
+ *   get:
+ *     summary: Get pages in jilid (public)
+ *     tags: [Jilid]
+ */
+router.get('/:id/pages', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      `SELECT halaman_id, nomor_halaman, deskripsi, jilid_id
+       FROM halaman
+       WHERE jilid_id = $1
+       ORDER BY nomor_halaman`,
+      [id]
+    );
+
+    res.json({ pages: result.rows });
+  } catch (error) {
+    console.error('Get jilid pages error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * @swagger
  * /api/jilid/{id}/letters:
  *   get:
  *     summary: Get letters in jilid (public)

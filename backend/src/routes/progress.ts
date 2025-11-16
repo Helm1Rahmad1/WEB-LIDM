@@ -490,6 +490,59 @@ router.get('/halaman/:id', async (req: AuthRequest, res) => {
 
 /**
  * @swagger
+ * /api/progress/halaman/by-page/{halamanId}:
+ *   get:
+ *     summary: Get halaman progress by halaman_id for current user
+ *     description: Check if current user has completed a specific page
+ *     tags: [Progress]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: halamanId
+ *         in: path
+ *         required: true
+ *         description: ID of the page (e.g., "1-1")
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Progress found
+ *       404:
+ *         description: No progress found for this page
+ */
+router.get('/halaman/by-page/:halamanId', async (req: AuthRequest, res) => {
+  try {
+    const { halamanId } = req.params;
+    const userId = req.user!.userId;
+
+    const result = await pool.query(
+      `SELECT uhp.*, h.jilid_id, h.nomor_halaman
+       FROM user_halaman_progress uhp
+       LEFT JOIN halaman h ON CAST(h.halaman_id AS TEXT) = uhp.halaman_id
+       WHERE uhp.user_id = $1 AND uhp.halaman_id = $2`,
+      [userId, halamanId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ 
+        message: 'No progress found for this page',
+        completed: false 
+      });
+    }
+
+    const progress = result.rows[0];
+    res.json({ 
+      progress: progress,
+      completed: progress.status > 0 
+    });
+  } catch (error) {
+    console.error('Get halaman progress by page error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * @swagger
  * /api/progress/halaman:
  *   post:
  *     summary: Create or update halaman progress for the current user
