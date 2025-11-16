@@ -176,6 +176,15 @@ router.get('/my-rooms', async (req: AuthRequest, res) => {
     console.log('[my-rooms] Fetching rooms for user:', userId);
     console.log('[my-rooms] User type:', typeof userId);
 
+    // Test database connection first
+    try {
+      await pool.query('SELECT 1');
+      console.log('[my-rooms] Database connection OK');
+    } catch (dbError) {
+      console.error('[my-rooms] Database connection failed:', dbError);
+      return res.status(503).json({ error: 'Database connection failed' });
+    }
+
     // First check if user exists
     const userCheck = await pool.query('SELECT user_id, name, email FROM users WHERE user_id = $1', [userId]);
     console.log('[my-rooms] User check result:', userCheck.rows.length);
