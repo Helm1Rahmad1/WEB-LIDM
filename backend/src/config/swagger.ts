@@ -14,10 +14,10 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: process.env.PROTOCOL === 'https' 
-          ? `https://${process.env.DOMAIN || 'signquran.site'}/api`
-          : `http://${process.env.DOMAIN || 'localhost'}:${process.env.PORT || 3001}`,
-        description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server',
+        url: process.env.NODE_ENV === 'production'
+          ? `https://${process.env.DOMAIN || 'signquran.site'}`
+          : `http://localhost:${process.env.PORT || 3001}`,
+        description: process.env.NODE_ENV === 'production' ? 'Production Server' : 'Development Server',
       },
     ],
     components: {
