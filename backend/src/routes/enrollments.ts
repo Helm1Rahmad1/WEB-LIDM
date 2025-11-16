@@ -4,6 +4,15 @@ import { authenticateToken, requireRole, AuthRequest } from '../middleware/auth'
 
 const router = express.Router();
 
+// Version endpoint to check deployment
+router.get('/debug/version', (req, res) => {
+  res.json({ 
+    version: 'v1.2.0', 
+    timestamp: new Date().toISOString(),
+    message: 'my-rooms endpoint with integer userId conversion'
+  });
+});
+
 // Debug endpoint - test database connection (no auth required)
 router.get('/debug/test-db', async (req, res) => {
   try {
@@ -252,8 +261,15 @@ router.get('/my-rooms', async (req: AuthRequest, res) => {
     // Check enrollments for this user
     const enrollCheck = await pool.query('SELECT * FROM enrollments WHERE user_id = $1', [userIdInt]);
     console.log('[my-rooms] Enrollments found:', enrollCheck.rows.length);
-    console.log('[my-rooms] Enrollments:', enrollCheck.rows);
+    console.log('[my-rooms] Enrollments:', JSON.stringify(enrollCheck.rows));
 
+    // If no enrollments, return empty array
+    if (enrollCheck.rows.length === 0) {
+      console.log('[my-rooms] No enrollments for user, returning empty array');
+      return res.json({ rooms: [] });
+    }
+
+    // Try the JOIN query
     const result = await pool.query(
       `SELECT 
         e.enrollment_id,
@@ -273,6 +289,7 @@ router.get('/my-rooms', async (req: AuthRequest, res) => {
     );
 
     console.log('[my-rooms] Found rooms after JOIN:', result.rows.length);
+    console.log('[my-rooms] Rooms:', JSON.stringify(result.rows));
     res.json({ rooms: result.rows });
   } catch (error) {
     console.error('[my-rooms] Error details:', error);
@@ -280,7 +297,7 @@ router.get('/my-rooms', async (req: AuthRequest, res) => {
       console.error('[my-rooms] Error message:', error.message);
       console.error('[my-rooms] Error stack:', error.stack);
     }
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
 
