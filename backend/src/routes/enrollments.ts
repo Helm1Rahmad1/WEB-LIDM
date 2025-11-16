@@ -102,6 +102,64 @@ router.get('/:id', async (req: AuthRequest, res) => {
 
 /**
  * @swagger
+ * /api/enrollments/room/{roomId}/members:
+ *   get:
+ *     summary: Get all members in a room
+ *     tags: [Enrollments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: roomId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: List of room members
+ */
+router.get('/room/:roomId/members', async (req: AuthRequest, res) => {
+  try {
+    const { roomId } = req.params;
+    const userId = req.user!.userId;
+
+    // Check if user is enrolled in this room
+    const enrollmentCheck = await pool.query(
+      'SELECT enrollment_id FROM enrollments WHERE user_id = $1 AND room_id = $2',
+      [userId, roomId]
+    );
+
+    if (enrollmentCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'You are not a member of this room' });
+    }
+
+    // Get all members with their details
+    const result = await pool.query(
+      `SELECT 
+        e.enrollment_id,
+        e.joined_at,
+        u.user_id,
+        u.name,
+        u.email,
+        u.role,
+        CASE WHEN r.created_by = u.user_id THEN true ELSE false END as is_creator
+       FROM enrollments e
+       INNER JOIN users u ON e.user_id = u.user_id
+       INNER JOIN rooms r ON e.room_id = r.room_id
+       WHERE e.room_id = $1
+       ORDER BY is_creator DESC, e.joined_at ASC`,
+      [roomId]
+    );
+
+    res.json({ members: result.rows });
+  } catch (error) {
+    console.error('Get room members error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * @swagger
  * /api/enrollments:
  *   post:
  *     summary: Create enrollment
