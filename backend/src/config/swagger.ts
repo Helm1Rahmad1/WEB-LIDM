@@ -150,6 +150,10 @@ const options: swaggerJsdoc.Options = {
         name: 'Jilid',
         description: 'Endpoints untuk data jilid (level pembelajaran)',
       },
+      {
+        name: 'Pages',
+        description: 'Endpoints untuk data halaman (pages) dan huruf hijaiyah per halaman',
+      },
     ],
   },
   apis: ['./src/routes/*.ts', './dist/routes/*.js'], // Path untuk development dan production
