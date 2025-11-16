@@ -238,28 +238,21 @@ router.get('/my-rooms', async (req: AuthRequest, res) => {
     const userId = req.user!.userId;
     console.log('[my-rooms] Fetching rooms for user:', userId);
     console.log('[my-rooms] User type:', typeof userId);
-
-    // Test database connection first
-    try {
-      await pool.query('SELECT 1');
-      console.log('[my-rooms] Database connection OK');
-    } catch (dbError) {
-      console.error('[my-rooms] Database connection failed:', dbError);
-      return res.status(503).json({ error: 'Database connection failed' });
-    }
-
-    // First check if user exists
-    const userCheck = await pool.query('SELECT user_id, name, email FROM users WHERE user_id = $1', [userId]);
-    console.log('[my-rooms] User check result:', userCheck.rows.length);
     
-    if (userCheck.rows.length === 0) {
-      console.error('[my-rooms] User not found:', userId);
-      return res.status(404).json({ error: 'User not found' });
+    // Convert userId to integer if it's a string
+    const userIdInt = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+    console.log('[my-rooms] Converted user ID:', userIdInt, 'type:', typeof userIdInt);
+
+    // Validate userId is a valid number
+    if (isNaN(userIdInt)) {
+      console.error('[my-rooms] Invalid user ID:', userId);
+      return res.status(400).json({ error: 'Invalid user ID' });
     }
 
     // Check enrollments for this user
-    const enrollCheck = await pool.query('SELECT * FROM enrollments WHERE user_id = $1', [userId]);
+    const enrollCheck = await pool.query('SELECT * FROM enrollments WHERE user_id = $1', [userIdInt]);
     console.log('[my-rooms] Enrollments found:', enrollCheck.rows.length);
+    console.log('[my-rooms] Enrollments:', enrollCheck.rows);
 
     const result = await pool.query(
       `SELECT 
@@ -276,7 +269,7 @@ router.get('/my-rooms', async (req: AuthRequest, res) => {
        INNER JOIN users u ON r.created_by = u.user_id
        WHERE e.user_id = $1
        ORDER BY e.joined_at DESC`,
-      [userId]
+      [userIdInt]
     );
 
     console.log('[my-rooms] Found rooms after JOIN:', result.rows.length);
