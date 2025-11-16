@@ -261,8 +261,8 @@ export default function GuruDashboardPage() {
                             </div>
                             <div className="flex items-center space-x-2 bg-[#F1C40F]/10 px-4 py-2 rounded-xl border border-[#F1C40F]/20">
                               <Users className="h-5 w-5 text-[#F1C40F]" />
-                              <span className="font-bold text-[#2C3E50] text-lg">
-                                {Number(room.student_count ?? 0)}
+                              <<span className="font-bold text-[#2C3E50] text-lg">
+                                {room.student_count ?? 0}
                               </span>
                               <span className="text-sm text-[#2C3E50]/60 font-medium">murid</span>
                             </div>
