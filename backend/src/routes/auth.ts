@@ -226,7 +226,10 @@ router.post('/login', async (req, res) => {
 
     if (!email || !password) {
       console.log('❌ Missing email or password');
-      return res.status(400).json({ error: 'Email and password are required' });
+      return res.status(400).json({ 
+        error: 'Email and password are required',
+        message: 'Email and password are required' 
+      });
     }
 
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
@@ -234,7 +237,10 @@ router.post('/login', async (req, res) => {
 
     if (!user || !user.password) {
       console.log('❌ User not found or no password:', email);
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ 
+        error: 'Invalid credentials',
+        message: 'Email or password is incorrect'
+      });
     }
 
     console.log('✅ User found:', user.email, 'Verified:', user.is_verified);
@@ -242,7 +248,10 @@ router.post('/login', async (req, res) => {
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       console.log('❌ Invalid password for:', email);
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ 
+        error: 'Invalid credentials',
+        message: 'Email or password is incorrect'
+      });
     }
 
     console.log('✅ Password valid');
@@ -252,6 +261,7 @@ router.post('/login', async (req, res) => {
       console.log('❌ Email not verified:', email);
       return res.status(403).json({ 
         error: 'Please verify your email before logging in. Check your email for the verification link.',
+        message: 'Please verify your email before logging in. Check your email for the verification link.',
         email_verified: false 
       });
     }
@@ -274,8 +284,9 @@ router.post('/login', async (req, res) => {
 
     console.log('✅ Login successful for:', email, 'Role:', user.role);
 
-    // Also return token in response for localStorage (Docker compatibility)
+    // Return response with required message field for Android compatibility
     res.json({
+      message: 'Login successful',
       user: {
         user_id: user.user_id,
         name: user.name,
@@ -286,7 +297,10 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('💥 Login error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: 'Something went wrong. Please try again later.'
+    });
   }
 });
 
