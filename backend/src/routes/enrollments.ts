@@ -7,10 +7,141 @@ const router = express.Router();
 // Version endpoint to check deployment
 router.get('/debug/version', (req, res) => {
   res.json({ 
-    version: 'v1.2.0', 
+    version: 'v1.4.0', 
     timestamp: new Date().toISOString(),
-    message: 'my-rooms endpoint with integer userId conversion'
+    message: 'Fixed my-rooms endpoint with better error handling and database structure validation',
+    deployed: true
   });
+});
+
+// Debug endpoint to check table structures and foreign key relationships
+router.get('/debug/check-tables', async (req, res) => {
+  try {
+    // Check if rooms table exists and structure
+    const roomsCheck = await pool.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_name = 'rooms'
+    `);
+    
+    // Check rooms table structure
+    const roomsStructure = await pool.query(`
+      SELECT column_name, data_type, is_nullable
+      FROM information_schema.columns 
+      WHERE table_name = 'rooms'
+      ORDER BY ordinal_position
+    `);
+    
+    // Check foreign key constraints
+    const foreignKeys = await pool.query(`
+      SELECT
+        tc.constraint_name, 
+        tc.table_name, 
+        kcu.column_name, 
+        ccu.table_name AS foreign_table_name,
+        ccu.column_name AS foreign_column_name 
+      FROM information_schema.table_constraints AS tc 
+      JOIN information_schema.key_column_usage AS kcu
+        ON tc.constraint_name = kcu.constraint_name
+        AND tc.table_schema = kcu.table_schema
+      JOIN information_schema.constraint_column_usage AS ccu
+        ON ccu.constraint_name = tc.constraint_name
+        AND ccu.table_schema = tc.table_schema
+      WHERE tc.constraint_type = 'FOREIGN KEY'
+      AND (tc.table_name = 'enrollments' OR tc.table_name = 'rooms')
+    `);
+    
+    // Sample data check
+    const roomsCount = await pool.query('SELECT COUNT(*) as count FROM rooms');
+    const sampleRooms = await pool.query('SELECT * FROM rooms LIMIT 3');
+    
+    res.json({
+      success: true,
+      roomsTableExists: roomsCheck.rows.length > 0,
+      roomsStructure: roomsStructure.rows,
+      foreignKeys: foreignKeys.rows,
+      totalRooms: roomsCount.rows[0].count,
+      sampleRooms: sampleRooms.rows
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+  }
+});
+
+// Test endpoint for any user ID 
+router.get('/debug/test-user/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const userIdInt = parseInt(userId, 10);
+    
+    if (isNaN(userIdInt)) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+    
+    // Check enrollments
+    const enrollCheck = await pool.query('SELECT * FROM enrollments WHERE user_id = $1', [userIdInt]);
+    console.log(`[debug] User ${userIdInt} has ${enrollCheck.rows.length} enrollments`);
+    
+    // Check if rooms exist for these enrollments
+    let roomsExist = [];
+    if (enrollCheck.rows.length > 0) {
+      for (const enrollment of enrollCheck.rows) {
+        const roomCheck = await pool.query('SELECT * FROM rooms WHERE room_id = $1', [enrollment.room_id]);
+        roomsExist.push({
+          enrollment_id: enrollment.enrollment_id,
+          room_id: enrollment.room_id,
+          room_exists: roomCheck.rows.length > 0,
+          room_data: roomCheck.rows[0] || null
+        });
+      }
+    }
+    
+    // Try JOIN query
+    let joinResult: { rows: any[], error: string | null } = { rows: [], error: null };
+    try {
+      const result = await pool.query(
+        `SELECT 
+          e.enrollment_id,
+          e.joined_at,
+          r.room_id,
+          r.name,
+          r.description,
+          r.code,
+          r.created_at,
+          u.name as created_by_name
+         FROM enrollments e
+         INNER JOIN rooms r ON e.room_id = r.room_id
+         INNER JOIN users u ON r.created_by = u.user_id
+         WHERE e.user_id = $1
+         ORDER BY e.joined_at DESC`,
+        [userIdInt]
+      );
+      joinResult.rows = result.rows;
+    } catch (joinError) {
+      joinResult.error = joinError instanceof Error ? joinError.message : 'Unknown join error';
+    }
+    
+    res.json({
+      success: true,
+      userId: userIdInt,
+      enrollmentsCount: enrollCheck.rows.length,
+      enrollments: enrollCheck.rows,
+      roomsExistCheck: roomsExist,
+      joinResult: joinResult,
+      roomsCount: joinResult.rows.length
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+  }
 });
 
 // Debug endpoint - test database connection (no auth required)
@@ -258,7 +389,7 @@ router.get('/my-rooms', async (req: AuthRequest, res) => {
       return res.status(400).json({ error: 'Invalid user ID' });
     }
 
-    // Check enrollments for this user
+    // Check enrollments for this user first
     const enrollCheck = await pool.query('SELECT * FROM enrollments WHERE user_id = $1', [userIdInt]);
     console.log('[my-rooms] Enrollments found:', enrollCheck.rows.length);
     console.log('[my-rooms] Enrollments:', JSON.stringify(enrollCheck.rows));
@@ -269,35 +400,82 @@ router.get('/my-rooms', async (req: AuthRequest, res) => {
       return res.json({ rooms: [] });
     }
 
-    // Try the JOIN query
-    const result = await pool.query(
-      `SELECT 
-        e.enrollment_id,
-        e.joined_at,
-        r.room_id,
-        r.name,
-        r.description,
-        r.code,
-        r.created_at,
-        u.name as created_by_name
-       FROM enrollments e
-       INNER JOIN rooms r ON e.room_id = r.room_id
-       INNER JOIN users u ON r.created_by = u.user_id
-       WHERE e.user_id = $1
-       ORDER BY e.joined_at DESC`,
-      [userIdInt]
-    );
+    // Check each room exists before doing JOIN
+    const missingRooms = [];
+    for (const enrollment of enrollCheck.rows) {
+      const roomCheck = await pool.query('SELECT room_id FROM rooms WHERE room_id = $1', [enrollment.room_id]);
+      if (roomCheck.rows.length === 0) {
+        missingRooms.push(enrollment.room_id);
+      }
+    }
 
-    console.log('[my-rooms] Found rooms after JOIN:', result.rows.length);
-    console.log('[my-rooms] Rooms:', JSON.stringify(result.rows));
-    res.json({ rooms: result.rows });
+    if (missingRooms.length > 0) {
+      console.error('[my-rooms] Missing rooms:', missingRooms);
+      return res.status(500).json({ 
+        error: 'Data inconsistency: Some enrolled rooms do not exist', 
+        missingRooms: missingRooms 
+      });
+    }
+
+    // Try the JOIN query with better error handling
+    try {
+      const result = await pool.query(
+        `SELECT 
+          e.enrollment_id,
+          e.joined_at,
+          r.room_id,
+          r.name,
+          r.description,
+          r.code,
+          r.created_at,
+          COALESCE(u.name, 'Unknown') as created_by_name,
+          r.created_by
+         FROM enrollments e
+         INNER JOIN rooms r ON e.room_id = r.room_id
+         LEFT JOIN users u ON r.created_by = u.user_id
+         WHERE e.user_id = $1
+         ORDER BY e.joined_at DESC`,
+        [userIdInt]
+      );
+
+      console.log('[my-rooms] Found rooms after JOIN:', result.rows.length);
+      console.log('[my-rooms] Rooms:', JSON.stringify(result.rows));
+      res.json({ rooms: result.rows });
+    } catch (joinError) {
+      console.error('[my-rooms] JOIN query failed:', joinError);
+      
+      // Fallback: Get basic room info without creator name
+      const fallbackResult = await pool.query(
+        `SELECT 
+          e.enrollment_id,
+          e.joined_at,
+          r.room_id,
+          r.name,
+          r.description,
+          r.code,
+          r.created_at,
+          'Unknown' as created_by_name,
+          r.created_by
+         FROM enrollments e
+         INNER JOIN rooms r ON e.room_id = r.room_id
+         WHERE e.user_id = $1
+         ORDER BY e.joined_at DESC`,
+        [userIdInt]
+      );
+
+      console.log('[my-rooms] Fallback query successful:', fallbackResult.rows.length);
+      res.json({ rooms: fallbackResult.rows });
+    }
   } catch (error) {
     console.error('[my-rooms] Error details:', error);
     if (error instanceof Error) {
       console.error('[my-rooms] Error message:', error.message);
       console.error('[my-rooms] Error stack:', error.stack);
     }
-    res.status(500).json({ error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' });
+    res.status(500).json({ 
+      error: 'Internal server error', 
+      details: error instanceof Error ? error.message : 'Unknown error' 
+    });
   }
 });
 
