@@ -375,6 +375,14 @@ router.get('/room/:roomId/members', async (req: AuthRequest, res) => {
  */
 router.get('/my-rooms', async (req: AuthRequest, res) => {
   try {
+    console.log('[my-rooms] Starting endpoint...');
+    console.log('[my-rooms] Request user object:', req.user);
+    
+    if (!req.user || !req.user.userId) {
+      console.error('[my-rooms] No user in request');
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
     const userId = req.user!.userId;
     console.log('[my-rooms] Fetching rooms for user:', userId);
     console.log('[my-rooms] User type:', typeof userId);
@@ -390,6 +398,7 @@ router.get('/my-rooms', async (req: AuthRequest, res) => {
     }
 
     // Check enrollments for this user first
+    console.log('[my-rooms] Checking enrollments...');
     const enrollCheck = await pool.query('SELECT * FROM enrollments WHERE user_id = $1', [userIdInt]);
     console.log('[my-rooms] Enrollments found:', enrollCheck.rows.length);
     console.log('[my-rooms] Enrollments:', JSON.stringify(enrollCheck.rows));
@@ -401,6 +410,7 @@ router.get('/my-rooms', async (req: AuthRequest, res) => {
     }
 
     // Check each room exists before doing JOIN
+    console.log('[my-rooms] Checking room existence...');
     const missingRooms = [];
     for (const enrollment of enrollCheck.rows) {
       const roomCheck = await pool.query('SELECT room_id FROM rooms WHERE room_id = $1', [enrollment.room_id]);
@@ -418,6 +428,7 @@ router.get('/my-rooms', async (req: AuthRequest, res) => {
     }
 
     // Try the JOIN query with better error handling
+    console.log('[my-rooms] Starting JOIN query...');
     try {
       const result = await pool.query(
         `SELECT 
@@ -440,11 +451,13 @@ router.get('/my-rooms', async (req: AuthRequest, res) => {
 
       console.log('[my-rooms] Found rooms after JOIN:', result.rows.length);
       console.log('[my-rooms] Rooms:', JSON.stringify(result.rows));
+      console.log('[my-rooms] Sending successful response');
       res.json({ rooms: result.rows });
     } catch (joinError) {
       console.error('[my-rooms] JOIN query failed:', joinError);
       
       // Fallback: Get basic room info without creator name
+      console.log('[my-rooms] Trying fallback query...');
       const fallbackResult = await pool.query(
         `SELECT 
           e.enrollment_id,
@@ -467,7 +480,7 @@ router.get('/my-rooms', async (req: AuthRequest, res) => {
       res.json({ rooms: fallbackResult.rows });
     }
   } catch (error) {
-    console.error('[my-rooms] Error details:', error);
+    console.error('[my-rooms] Outer catch error:', error);
     if (error instanceof Error) {
       console.error('[my-rooms] Error message:', error.message);
       console.error('[my-rooms] Error stack:', error.stack);
