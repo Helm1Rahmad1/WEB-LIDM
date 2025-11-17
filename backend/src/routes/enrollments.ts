@@ -373,6 +373,40 @@ router.get('/room/:roomId/members', async (req: AuthRequest, res) => {
  *       200:
  *         description: List of enrolled rooms
  */
+router.get('/my-rooms-simple', async (req: AuthRequest, res) => {
+  try {
+    console.log('[my-rooms-simple] Starting simple endpoint test...');
+    const userId = req.user!.userId;
+    console.log('[my-rooms-simple] User ID:', userId);
+    
+    // Use the exact same query as the debug endpoint that works
+    const result = await pool.query(
+      `SELECT 
+        e.enrollment_id,
+        e.joined_at,
+        r.room_id,
+        r.name,
+        r.description,
+        r.code,
+        r.created_at,
+        u.name as created_by_name
+       FROM enrollments e
+       INNER JOIN rooms r ON e.room_id = r.room_id
+       INNER JOIN users u ON r.created_by = u.user_id
+       WHERE e.user_id = $1
+       ORDER BY e.joined_at DESC`,
+      [userId]
+    );
+    
+    console.log('[my-rooms-simple] Query successful, found:', result.rows.length);
+    console.log('[my-rooms-simple] Results:', JSON.stringify(result.rows));
+    res.json({ rooms: result.rows });
+  } catch (error) {
+    console.error('[my-rooms-simple] Error:', error);
+    res.status(500).json({ error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
 router.get('/my-rooms', async (req: AuthRequest, res) => {
   try {
     console.log('[my-rooms] Starting endpoint...');
