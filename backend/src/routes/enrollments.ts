@@ -227,23 +227,31 @@ router.get('/', async (req: AuthRequest, res) => {
     let query = `
       SELECT e.*, u.name, u.email, r.name as room_name 
       FROM enrollments e
-      INNER JOIN users u ON e.user_id = u.user_id
-      INNER JOIN rooms r ON e.room_id = r.room_id
+      LEFT JOIN users u ON e.user_id = u.user_id
+      LEFT JOIN rooms r ON e.room_id = r.room_id
       WHERE 1=1
     `;
     const params: any[] = [];
     let paramCount = 1;
 
     if (roomId) {
-      query += ` AND e.room_id = $${paramCount}`;
-      params.push(roomId);
-      paramCount++;
+      // Validate roomId if provided
+      const roomIdInt = typeof roomId === 'string' ? parseInt(roomId as string, 10) : roomId;
+      if (!isNaN(Number(roomIdInt))) {
+        query += ` AND e.room_id = $${paramCount}`;
+        params.push(roomIdInt);
+        paramCount++;
+      }
     }
 
     if (userId) {
-      query += ` AND e.user_id = $${paramCount}`;
-      params.push(userId);
-      paramCount++;
+      // Validate userId if provided
+      const userIdInt = typeof userId === 'string' ? parseInt(userId as string, 10) : userId;
+      if (!isNaN(Number(userIdInt))) {
+        query += ` AND e.user_id = $${paramCount}`;
+        params.push(userIdInt);
+        paramCount++;
+      }
     }
 
     if (userRole === 'murid') {
@@ -258,48 +266,11 @@ router.get('/', async (req: AuthRequest, res) => {
     res.json({ enrollments: result.rows });
   } catch (error) {
     console.error('Get enrollments error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-/**
- * @swagger
- * /api/enrollments/{id}:
- *   get:
- *     summary: Get enrollment by ID
- *     tags: [Enrollments]
- *     security:
- *       - bearerAuth: []
- */
-router.get('/:id', async (req: AuthRequest, res) => {
-  try {
-    const { id } = req.params;
-    const userRole = req.user!.role;
-    const userId = req.user!.userId;
-
-    const result = await pool.query(
-      `SELECT e.*, u.name, u.email, r.name as room_name 
-       FROM enrollments e
-       INNER JOIN users u ON e.user_id = u.user_id
-       INNER JOIN rooms r ON e.room_id = r.room_id
-       WHERE e.enrollment_id = $1`,
-      [id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Enrollment not found' });
-    }
-
-    const enrollment = result.rows[0];
-
-    if (userRole === 'murid' && enrollment.user_id !== userId) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-
-    res.json({ enrollment: enrollment });
-  } catch (error) {
-    console.error('Get enrollment error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ 
+      enrollments: [], 
+      error: 'Failed to fetch enrollments',
+      message: 'An error occurred while retrieving enrollments' 
+    });
   }
 });
 
@@ -325,39 +296,45 @@ router.get('/room/:roomId/members', async (req: AuthRequest, res) => {
   try {
     const { roomId } = req.params;
     const userId = req.user!.userId;
+    
+    // Validate roomId
+    const roomIdInt = typeof roomId === 'string' ? parseInt(roomId, 10) : roomId;
+    if (isNaN(roomIdInt)) {
+      return res.status(400).json({ members: [], error: 'Invalid room ID' });
+    }
 
     // Check if user is enrolled in this room
     const enrollmentCheck = await pool.query(
       'SELECT enrollment_id FROM enrollments WHERE user_id = $1 AND room_id = $2',
-      [userId, roomId]
+      [userId, roomIdInt]
     );
 
     if (enrollmentCheck.rows.length === 0) {
-      return res.status(403).json({ error: 'You are not a member of this room' });
+      return res.status(403).json({ members: [], error: 'You are not a member of this room' });
     }
 
-    // Get all members with their details
+    // Get all members with their details using LEFT JOIN to handle missing user data
     const result = await pool.query(
       `SELECT 
         e.enrollment_id,
         e.joined_at,
         u.user_id,
-        u.name,
-        u.email,
-        u.role,
+        COALESCE(u.name, 'Unknown User') as name,
+        COALESCE(u.email, 'no-email@unknown.com') as email,
+        COALESCE(u.role, 'murid') as role,
         CASE WHEN r.created_by = u.user_id THEN true ELSE false END as is_creator
        FROM enrollments e
-       INNER JOIN users u ON e.user_id = u.user_id
+       LEFT JOIN users u ON e.user_id = u.user_id
        INNER JOIN rooms r ON e.room_id = r.room_id
        WHERE e.room_id = $1
        ORDER BY is_creator DESC, e.joined_at ASC`,
-      [roomId]
+      [roomIdInt]
     );
 
     res.json({ members: result.rows });
   } catch (error) {
     console.error('Get room members error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ members: [], error: 'Failed to fetch room members' });
   }
 });
 
@@ -379,7 +356,14 @@ router.get('/my-rooms-simple', async (req: AuthRequest, res) => {
     const userId = req.user!.userId;
     console.log('[my-rooms-simple] User ID:', userId);
     
-    // Use the exact same query as the debug endpoint that works
+    // Validate userId type and convert if necessary
+    const userIdInt = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+    if (isNaN(userIdInt)) {
+      console.error('[my-rooms-simple] Invalid user ID:', userId);
+      return res.status(400).json({ rooms: [], error: 'Invalid user ID' });
+    }
+    
+    // Use LEFT JOIN to handle missing creators gracefully and provide fallback data
     const result = await pool.query(
       `SELECT 
         e.enrollment_id,
@@ -389,13 +373,13 @@ router.get('/my-rooms-simple', async (req: AuthRequest, res) => {
         r.description,
         r.code,
         r.created_at,
-        u.name as created_by_name
+        COALESCE(u.name, 'Unknown Creator') as created_by_name
        FROM enrollments e
        INNER JOIN rooms r ON e.room_id = r.room_id
-       INNER JOIN users u ON r.created_by = u.user_id
+       LEFT JOIN users u ON r.created_by = u.user_id
        WHERE e.user_id = $1
        ORDER BY e.joined_at DESC`,
-      [userId]
+      [userIdInt]
     );
     
     console.log('[my-rooms-simple] Query successful, found:', result.rows.length);
@@ -403,7 +387,12 @@ router.get('/my-rooms-simple', async (req: AuthRequest, res) => {
     res.json({ rooms: result.rows });
   } catch (error) {
     console.error('[my-rooms-simple] Error:', error);
-    res.status(500).json({ error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' });
+    // Always return the expected format for Android client to prevent crashes
+    res.status(500).json({ 
+      rooms: [], 
+      error: 'Failed to fetch rooms',
+      message: 'An error occurred while retrieving your rooms'
+    });
   }
 });
 
@@ -414,7 +403,7 @@ router.get('/my-rooms', async (req: AuthRequest, res) => {
     
     if (!req.user || !req.user.userId) {
       console.error('[my-rooms] No user in request');
-      return res.status(401).json({ error: 'User not authenticated' });
+      return res.status(401).json({ rooms: [], error: 'User not authenticated' });
     }
 
     const userId = req.user!.userId;
@@ -428,101 +417,96 @@ router.get('/my-rooms', async (req: AuthRequest, res) => {
     // Validate userId is a valid number
     if (isNaN(userIdInt)) {
       console.error('[my-rooms] Invalid user ID:', userId);
-      return res.status(400).json({ error: 'Invalid user ID' });
+      return res.status(400).json({ rooms: [], error: 'Invalid user ID' });
     }
 
-    // Check enrollments for this user first
-    console.log('[my-rooms] Checking enrollments...');
-    const enrollCheck = await pool.query('SELECT * FROM enrollments WHERE user_id = $1', [userIdInt]);
-    console.log('[my-rooms] Enrollments found:', enrollCheck.rows.length);
-    console.log('[my-rooms] Enrollments:', JSON.stringify(enrollCheck.rows));
-
-    // If no enrollments, return empty array
-    if (enrollCheck.rows.length === 0) {
-      console.log('[my-rooms] No enrollments for user, returning empty array');
-      return res.json({ rooms: [] });
-    }
-
-    // Check each room exists before doing JOIN
-    console.log('[my-rooms] Checking room existence...');
-    const missingRooms = [];
-    for (const enrollment of enrollCheck.rows) {
-      const roomCheck = await pool.query('SELECT room_id FROM rooms WHERE room_id = $1', [enrollment.room_id]);
-      if (roomCheck.rows.length === 0) {
-        missingRooms.push(enrollment.room_id);
-      }
-    }
-
-    if (missingRooms.length > 0) {
-      console.error('[my-rooms] Missing rooms:', missingRooms);
-      return res.status(500).json({ 
-        error: 'Data inconsistency: Some enrolled rooms do not exist', 
-        missingRooms: missingRooms 
-      });
-    }
-
-    // Try the JOIN query with better error handling
+    // Try with LEFT JOIN to handle missing creators gracefully
     console.log('[my-rooms] Starting JOIN query...');
-    try {
-      const result = await pool.query(
-        `SELECT 
-          e.enrollment_id,
-          e.joined_at,
-          r.room_id,
-          r.name,
-          r.description,
-          r.code,
-          r.created_at,
-          COALESCE(u.name, 'Unknown') as created_by_name,
-          r.created_by
-         FROM enrollments e
-         INNER JOIN rooms r ON e.room_id = r.room_id
-         LEFT JOIN users u ON r.created_by = u.user_id
-         WHERE e.user_id = $1
-         ORDER BY e.joined_at DESC`,
-        [userIdInt]
-      );
+    const result = await pool.query(
+      `SELECT 
+        e.enrollment_id,
+        e.joined_at,
+        r.room_id,
+        r.name,
+        r.description,
+        r.code,
+        r.created_at,
+        COALESCE(u.name, 'Unknown Creator') as created_by_name,
+        r.created_by
+       FROM enrollments e
+       INNER JOIN rooms r ON e.room_id = r.room_id
+       LEFT JOIN users u ON r.created_by = u.user_id
+       WHERE e.user_id = $1
+       ORDER BY e.joined_at DESC`,
+      [userIdInt]
+    );
 
-      console.log('[my-rooms] Found rooms after JOIN:', result.rows.length);
-      console.log('[my-rooms] Rooms:', JSON.stringify(result.rows));
-      console.log('[my-rooms] Sending successful response');
-      res.json({ rooms: result.rows });
-    } catch (joinError) {
-      console.error('[my-rooms] JOIN query failed:', joinError);
-      
-      // Fallback: Get basic room info without creator name
-      console.log('[my-rooms] Trying fallback query...');
-      const fallbackResult = await pool.query(
-        `SELECT 
-          e.enrollment_id,
-          e.joined_at,
-          r.room_id,
-          r.name,
-          r.description,
-          r.code,
-          r.created_at,
-          'Unknown' as created_by_name,
-          r.created_by
-         FROM enrollments e
-         INNER JOIN rooms r ON e.room_id = r.room_id
-         WHERE e.user_id = $1
-         ORDER BY e.joined_at DESC`,
-        [userIdInt]
-      );
-
-      console.log('[my-rooms] Fallback query successful:', fallbackResult.rows.length);
-      res.json({ rooms: fallbackResult.rows });
-    }
+    console.log('[my-rooms] Found rooms after JOIN:', result.rows.length);
+    console.log('[my-rooms] Rooms:', JSON.stringify(result.rows));
+    console.log('[my-rooms] Sending successful response');
+    res.json({ rooms: result.rows });
   } catch (error) {
-    console.error('[my-rooms] Outer catch error:', error);
+    console.error('[my-rooms] Error:', error);
     if (error instanceof Error) {
       console.error('[my-rooms] Error message:', error.message);
       console.error('[my-rooms] Error stack:', error.stack);
     }
+    // Always return the expected { rooms: [...] } format for Android client to prevent crashes
     res.status(500).json({ 
-      error: 'Internal server error', 
-      details: error instanceof Error ? error.message : 'Unknown error' 
+      rooms: [],
+      error: 'Failed to fetch rooms',
+      message: 'An error occurred while retrieving your rooms' 
     });
+  }
+});
+
+/**
+ * @swagger
+ * /api/enrollments/{id}:
+ *   get:
+ *     summary: Get enrollment by ID
+ *     tags: [Enrollments]
+ *     security:
+ *       - bearerAuth: []
+ */
+router.get('/:id', async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const userRole = req.user!.role;
+    const userId = req.user!.userId;
+    
+    // Validate the id parameter
+    const idInt = typeof id === 'string' ? parseInt(id, 10) : id;
+    if (isNaN(idInt)) {
+      return res.status(400).json({ error: 'Invalid enrollment ID' });
+    }
+
+    const result = await pool.query(
+      `SELECT e.*, 
+       COALESCE(u.name, 'Unknown User') as name, 
+       COALESCE(u.email, 'no-email@unknown.com') as email, 
+       COALESCE(r.name, 'Unknown Room') as room_name 
+       FROM enrollments e
+       LEFT JOIN users u ON e.user_id = u.user_id
+       LEFT JOIN rooms r ON e.room_id = r.room_id
+       WHERE e.enrollment_id = $1`,
+      [idInt]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Enrollment not found' });
+    }
+
+    const enrollment = result.rows[0];
+
+    if (userRole === 'murid' && enrollment.user_id !== userId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    res.json({ enrollment: enrollment });
+  } catch (error) {
+    console.error('Get enrollment error:', error);
+    res.status(500).json({ error: 'Failed to fetch enrollment' });
   }
 });
 
@@ -596,7 +580,10 @@ router.post('/join', async (req: AuthRequest, res) => {
     });
   } catch (error) {
     console.error('Join room error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ 
+      error: 'Failed to join room',
+      message: 'An error occurred while joining the room' 
+    });
   }
 });
 
@@ -619,23 +606,31 @@ router.post('/', async (req: AuthRequest, res) => {
       return res.status(400).json({ error: 'userId and roomId are required' });
     }
 
-    if (userRole === 'murid' && userId !== currentUserId) {
+    // Validate userId and roomId
+    const userIdInt = typeof userId === 'string' ? parseInt(userId, 10) : userId;
+    const roomIdInt = typeof roomId === 'string' ? parseInt(roomId, 10) : roomId;
+    
+    if (isNaN(userIdInt) || isNaN(roomIdInt)) {
+      return res.status(400).json({ error: 'Invalid userId or roomId' });
+    }
+
+    if (userRole === 'murid' && userIdInt !== currentUserId) {
       return res.status(403).json({ error: 'Cannot enroll other users' });
     }
 
-    const roomCheck = await pool.query('SELECT room_id FROM rooms WHERE room_id = $1', [roomId]);
+    const roomCheck = await pool.query('SELECT room_id FROM rooms WHERE room_id = $1', [roomIdInt]);
     if (roomCheck.rows.length === 0) {
       return res.status(404).json({ error: 'Room not found' });
     }
 
-    const userCheck = await pool.query('SELECT user_id FROM users WHERE user_id = $1', [userId]);
+    const userCheck = await pool.query('SELECT user_id FROM users WHERE user_id = $1', [userIdInt]);
     if (userCheck.rows.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
 
     const existingEnrollment = await pool.query(
       'SELECT enrollment_id FROM enrollments WHERE user_id = $1 AND room_id = $2',
-      [userId, roomId]
+      [userIdInt, roomIdInt]
     );
 
     if (existingEnrollment.rows.length > 0) {
@@ -644,13 +639,16 @@ router.post('/', async (req: AuthRequest, res) => {
 
     const result = await pool.query(
       'INSERT INTO enrollments (user_id, room_id) VALUES ($1, $2) RETURNING *',
-      [userId, roomId]
+      [userIdInt, roomIdInt]
     );
 
     res.status(201).json({ enrollment: result.rows[0] });
   } catch (error) {
     console.error('Create enrollment error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ 
+      error: 'Failed to create enrollment',
+      message: 'An error occurred while creating the enrollment' 
+    });
   }
 });
 
@@ -668,10 +666,16 @@ router.delete('/:id', async (req: AuthRequest, res) => {
     const { id } = req.params;
     const userRole = req.user!.role;
     const userId = req.user!.userId;
+    
+    // Validate the id parameter
+    const idInt = typeof id === 'string' ? parseInt(id, 10) : id;
+    if (isNaN(idInt)) {
+      return res.status(400).json({ error: 'Invalid enrollment ID' });
+    }
 
     const enrollmentCheck = await pool.query(
       'SELECT user_id FROM enrollments WHERE enrollment_id = $1',
-      [id]
+      [idInt]
     );
 
     if (enrollmentCheck.rows.length === 0) {
@@ -682,12 +686,15 @@ router.delete('/:id', async (req: AuthRequest, res) => {
       return res.status(403).json({ error: 'Cannot delete other user enrollments' });
     }
 
-    await pool.query('DELETE FROM enrollments WHERE enrollment_id = $1', [id]);
+    await pool.query('DELETE FROM enrollments WHERE enrollment_id = $1', [idInt]);
 
     res.json({ message: 'Enrollment deleted successfully' });
   } catch (error) {
     console.error('Delete enrollment error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ 
+      error: 'Failed to delete enrollment',
+      message: 'An error occurred while deleting the enrollment' 
+    });
   }
 });
 
