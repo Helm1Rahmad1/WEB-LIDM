@@ -224,7 +224,7 @@ export default function HomePage() {
                 <div className="relative mx-auto w-full max-w-sm">
                   <div className="absolute inset-0 bg-gradient-to-br from-teal-500/20 to-yellow-500/20 rounded-[3rem] blur-3xl"></div>
                   <Image
-                    src="/images/mockup-phone.png"
+                    src="/phone.png"
                     alt="Sign Quran Mobile App"
                     width={400}
                     height={800}
