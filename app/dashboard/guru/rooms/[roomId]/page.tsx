@@ -70,6 +70,7 @@ export default function RoomDetailPage({ params }: Props) {
 
         const studentsResponse = await apiClient.get(`/api/rooms/${roomId}/students`)
         console.log('✅ Students data:', studentsResponse.data)
+        console.log('✅ First student:', studentsResponse.data.students?.[0])
         setStudents(studentsResponse.data.students || [])
         
       } catch (error) {
