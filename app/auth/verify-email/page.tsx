@@ -8,6 +8,9 @@ import { Input } from "@/components/ui/input"
 import { CheckCircle, XCircle, Loader2, Mail, AlertCircle, ArrowRight, Sparkles } from "lucide-react"
 import { motion } from "framer-motion"
 
+// Disable static generation for this page
+export const dynamic = 'force-dynamic'
+
 function VerifyEmailContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
