@@ -10,6 +10,7 @@ import { useEffect, useState } from "react"
 
 export default function HomePage() {
   const [scrollY, setScrollY] = useState(0)
+  const [imageError, setImageError] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY)
@@ -220,17 +221,27 @@ export default function HomePage() {
                   ease: "easeInOut"
                 }}
               >
-                {/* Ganti dengan path mockup HP Anda */}
                 <div className="relative mx-auto w-full max-w-sm">
                   <div className="absolute inset-0 bg-gradient-to-br from-teal-500/20 to-yellow-500/20 rounded-[3rem] blur-3xl"></div>
-                  <Image
-                    src="/phone.png"
-                    alt="Sign Quran Mobile App"
-                    width={400}
-                    height={800}
-                    className="relative z-10 drop-shadow-2xl"
-                    priority
-                  />
+                  {!imageError ? (
+                    <Image
+                      src="/phone.png"
+                      alt="Sign Quran Mobile App"
+                      width={400}
+                      height={800}
+                      className="relative z-10 drop-shadow-2xl"
+                      priority
+                      onError={() => setImageError(true)}
+                    />
+                  ) : (
+                    <div className="relative z-10 bg-white rounded-[3rem] shadow-2xl p-8 aspect-[9/16] flex items-center justify-center border-8 border-gray-200">
+                      <div className="text-center">
+                        <Smartphone className="h-20 w-20 text-teal-600 mx-auto mb-4" />
+                        <p className="text-gray-600 font-semibold">Sign Quran Mobile App</p>
+                        <p className="text-sm text-gray-400 mt-2">Mockup Preview</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </motion.div>
 
