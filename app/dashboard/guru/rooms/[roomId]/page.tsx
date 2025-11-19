@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Users, Copy, BookOpen, Award, TrendingUp, Target, BarChart3, Settings, ArrowRight, Calendar, Clock } from "lucide-react"
+import { ArrowLeft, Users, Copy, BookOpen, Award, TrendingUp, Target, BarChart3, ArrowRight, Calendar, Clock, Sparkles, Check } from "lucide-react"
 import Link from "next/link"
 import apiClient from "@/lib/api-client"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface Props {
   params: Promise<{ roomId: string }>
@@ -19,6 +20,36 @@ export default function RoomDetailPage({ params }: Props) {
   const [room, setRoom] = useState<any>(null)
   const [students, setStudents] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [copied, setCopied] = useState(false)
+
+  // Animation variants
+  const fadeInUp = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.5, ease: "easeOut" }
+    }
+  }
+
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  }
+
+  const scaleOnHover = {
+    rest: { scale: 1 },
+    hover: { 
+      scale: 1.05,
+      transition: { duration: 0.3, ease: "easeInOut" }
+    }
+  }
 
   // Unwrap params
   useEffect(() => {
@@ -33,19 +64,16 @@ export default function RoomDetailPage({ params }: Props) {
       try {
         setLoading(true)
         
-        // Fetch room details
         const roomResponse = await apiClient.get(`/api/rooms/${roomId}`)
         console.log('✅ Room data:', roomResponse.data)
         setRoom(roomResponse.data.room)
 
-        // Fetch students in this room
         const studentsResponse = await apiClient.get(`/api/rooms/${roomId}/students`)
         console.log('✅ Students data:', studentsResponse.data)
         setStudents(studentsResponse.data.students || [])
         
       } catch (error) {
         console.error('❌ Error fetching data:', error)
-        // If room not found or not authorized, redirect
         router.push('/dashboard/guru')
       } finally {
         setLoading(false)
@@ -55,13 +83,38 @@ export default function RoomDetailPage({ params }: Props) {
     fetchData()
   }, [roomId, router])
 
+  const handleCopyCode = () => {
+    if (room?.code) {
+      navigator.clipboard.writeText(room.code)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#147E7E] border-t-transparent mb-4"></div>
-          <p className="text-lg text-[#2C3E50] font-medium">Memuat...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-teal-50/30">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center space-y-4"
+        >
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-teal-600/30 border-t-teal-600 rounded-full animate-spin" />
+            <motion.div
+              className="absolute inset-0 w-16 h-16 border-4 border-yellow-500/30 border-t-yellow-500 rounded-full animate-spin"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+            />
+          </div>
+          <motion.p 
+            className="text-gray-900 font-semibold text-lg"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            Memuat...
+          </motion.p>
+        </motion.div>
       </div>
     )
   }
@@ -70,335 +123,482 @@ export default function RoomDetailPage({ params }: Props) {
     return null
   }
 
-  // Compute progress stats from students data
   const totalProgress = students.reduce((sum, s) => sum + (s.totalPages || 0), 0)
   const completedProgress = students.reduce((sum, s) => sum + (s.totalCompletedPages || 0), 0)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#D5DBDB] via-[#D5DBDB] to-[#c8d0d0] relative overflow-hidden">
-      {/* Background Decorative Elements */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-teal-50/30 relative overflow-hidden">
+      {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-20 w-96 h-96 bg-[#147E7E]/8 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-40 right-20 w-80 h-80 bg-[#F1C40F]/8 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-[#2C3E50]/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 left-1/4 w-72 h-72 bg-[#147E7E]/6 rounded-full blur-3xl"></div>
+        <motion.div 
+          className="absolute top-20 left-20 w-96 h-96 bg-teal-500/5 rounded-full blur-3xl"
+          animate={{
+            y: [0, 30, 0],
+            x: [0, 20, 0],
+            scale: [1, 1.1, 1],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        <motion.div 
+          className="absolute bottom-40 right-20 w-80 h-80 bg-yellow-500/5 rounded-full blur-3xl"
+          animate={{
+            y: [0, -30, 0],
+            x: [0, -20, 0],
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: 12,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
       </div>
 
-      {/* Enhanced Header with Glass Effect */}
-      <header className="relative z-20 backdrop-blur-lg bg-gradient-to-r from-[#147E7E] to-[#147E7E]/90 shadow-2xl border-b border-white/10">
-        <div className="absolute inset-0 bg-[#147E7E]/10 backdrop-blur-sm"></div>
-        <div className="relative max-w-7xl mx-auto px-6 py-8">
-          <div className="flex flex-col lg:flex-row justify-between items-center space-y-6 lg:space-y-0">
-            {/* Enhanced Navigation and Title Section */}
+      {/* Header */}
+      <motion.header 
+        className="relative z-20 backdrop-blur-lg bg-white/80 shadow-xl border-b border-gray-200/50"
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+      >
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-6 lg:space-y-0">
             <div className="flex items-center space-x-6">
               <Link href="/dashboard/guru">
-                <Button className="group relative overflow-hidden font-semibold px-6 py-3 rounded-xl border-2 border-white/40 text-white bg-white/10 hover:bg-white hover:text-[#147E7E] backdrop-blur-sm transition-all duration-300 hover:scale-105">
-                  <ArrowLeft className="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
-                  <span>Kembali</span>
-                </Button>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button className="group font-semibold px-6 py-3 rounded-xl bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white shadow-lg hover:shadow-xl transition-all duration-300">
+                    <ArrowLeft className="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
+                    <span>Kembali</span>
+                  </Button>
+                </motion.div>
               </Link>
               <div className="flex items-center space-x-4">
-                <div className="p-4 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/20 group hover:scale-110 transition-transform duration-300">
-                  <BookOpen className="h-10 w-10 text-white group-hover:rotate-12 transition-transform duration-300" />
-                </div>
+                <motion.div 
+                  className="p-4 rounded-2xl bg-gradient-to-br from-teal-600 to-teal-700 shadow-lg"
+                  whileHover={{ rotate: 12, scale: 1.1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <BookOpen className="h-8 w-8 text-white" />
+                </motion.div>
                 <div>
-                  <div className="flex items-center space-x-3 mb-2">
-                    <h1 className="text-3xl font-bold text-white tracking-tight">{room.name}</h1>
-                  </div>
-                  <p className="text-base text-white/90 font-medium">Detail Kelas & Manajemen Murid</p>
-                  <p className="text-sm text-white/70 mt-1">Pantau progres dan kelola pembelajaran</p>
+                  <motion.h1 
+                    className="text-3xl font-bold bg-gradient-to-r from-teal-700 to-teal-600 bg-clip-text text-transparent"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    {room.name}
+                  </motion.h1>
+                  <motion.p 
+                    className="text-base text-gray-600 font-medium mt-1"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    Detail Kelas & Manajemen Murid
+                  </motion.p>
                 </div>
               </div>
             </div>
 
-            {/* Enhanced Action Buttons */}
             <div className="flex items-center space-x-4">
               <Link href={`/dashboard/guru/rooms/${roomId}/students`}>
-                <Button className="group relative overflow-hidden font-bold px-8 py-4 rounded-xl transition-all duration-300 hover:scale-105 bg-[#F1C40F] text-[#2C3E50] hover:bg-white shadow-xl hover:shadow-2xl">
-                  <Users className="h-6 w-6 mr-3 group-hover:rotate-12 transition-transform duration-300" />
-                  <span className="text-lg">Kelola Murid</span>
-                  <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
-                </Button>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button className="group font-bold px-8 py-4 rounded-xl bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-gray-900 shadow-xl hover:shadow-2xl transition-all duration-300 text-lg">
+                    <Users className="h-6 w-6 mr-3 group-hover:rotate-12 transition-transform duration-300" />
+                    <span>Kelola Murid</span>
+                  </Button>
+                </motion.div>
               </Link>
             </div>
           </div>
         </div>
-      </header>
+      </motion.header>
 
       <div className="relative z-10 max-w-7xl mx-auto p-6 space-y-10">
-        {/* Enhanced Stats Cards with Advanced Design */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Total Murid Card */}
-          <Card className="group relative overflow-hidden border-0 bg-white/90 backdrop-blur-sm shadow-2xl hover:shadow-3xl transition-all duration-500 rounded-3xl hover:-translate-y-2 hover:rotate-1">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#147E7E]/10 via-transparent to-[#147E7E]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-4 p-8">
-              <div className="space-y-2">
-                <CardTitle className="text-sm font-bold text-[#2C3E50]/70 uppercase tracking-wide flex items-center space-x-2">
-                  <Users className="h-4 w-4" />
-                  <span>Total Murid</span>
-                </CardTitle>
-                <div className="text-4xl font-black text-[#2C3E50] group-hover:text-[#147E7E] transition-colors duration-300">
-                  {students?.length || 0}
-                </div>
-                <p className="text-sm text-[#2C3E50]/60 font-medium">Murid terdaftar</p>
-              </div>
-              <div className="p-4 rounded-2xl bg-[#147E7E]/10 group-hover:bg-[#147E7E]/20 transition-all duration-300 group-hover:scale-110">
-                <Users className="h-8 w-8 text-[#147E7E] group-hover:rotate-12 transition-transform duration-300" />
-              </div>
-            </CardHeader>
-          </Card>
+        {/* Stats Cards */}
+        <motion.div 
+          className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+        >
+          {[
+            {
+              icon: Users,
+              title: "Total Murid",
+              value: students?.length || 0,
+              subtitle: "Murid terdaftar",
+              color: "from-teal-600 to-teal-700",
+              bgColor: "from-teal-50 to-teal-100/50"
+            },
+            {
+              icon: TrendingUp,
+              title: "Progress",
+              value: completedProgress,
+              subtitle: `Dari ${totalProgress}`,
+              color: "from-yellow-400 to-yellow-500",
+              bgColor: "from-yellow-50 to-yellow-100/50"
+            },
+            {
+              icon: Award,
+              title: "Tes Selesai",
+              value: 0,
+              subtitle: "Evaluasi lengkap",
+              color: "from-gray-700 to-gray-800",
+              bgColor: "from-gray-50 to-gray-100/50"
+            },
+            {
+              icon: BarChart3,
+              title: "Kemajuan",
+              value: `${totalProgress > 0 ? Math.round((completedProgress / totalProgress) * 100) : 0}%`,
+              subtitle: "Rata-rata kelas",
+              color: "from-green-500 to-green-600",
+              bgColor: "from-green-50 to-green-100/50"
+            }
+          ].map((stat, index) => (
+            <motion.div
+              key={index}
+              variants={fadeInUp}
+              whileHover={{ y: -10, scale: 1.02 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Card className={`group relative overflow-hidden border-0 bg-gradient-to-br ${stat.bgColor} shadow-xl hover:shadow-2xl transition-all duration-500 rounded-3xl`}>
+                <div className="absolute inset-0 bg-white/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-4 p-8">
+                  <div className="space-y-2">
+                    <CardTitle className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center space-x-2">
+                      <stat.icon className="h-4 w-4" />
+                      <span>{stat.title}</span>
+                    </CardTitle>
+                    <div className="text-4xl font-black text-gray-900 group-hover:scale-110 transition-transform duration-300">
+                      {stat.value}
+                    </div>
+                    <p className="text-sm text-gray-600 font-medium">{stat.subtitle}</p>
+                  </div>
+                  <motion.div 
+                    className={`p-4 rounded-2xl bg-gradient-to-br ${stat.color} shadow-lg`}
+                    whileHover={{ rotate: 360, scale: 1.1 }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    <stat.icon className="h-8 w-8 text-white" />
+                  </motion.div>
+                </CardHeader>
+              </Card>
+            </motion.div>
+          ))}
+        </motion.div>
 
-          {/* Progress Selesai Card */}
-          <Card className="group relative overflow-hidden border-0 bg-white/90 backdrop-blur-sm shadow-2xl hover:shadow-3xl transition-all duration-500 rounded-3xl hover:-translate-y-2 hover:rotate-1">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#F1C40F]/10 via-transparent to-[#F1C40F]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-4 p-8">
-              <div className="space-y-2">
-                <CardTitle className="text-sm font-bold text-[#2C3E50]/70 uppercase tracking-wide flex items-center space-x-2">
-                  <TrendingUp className="h-4 w-4" />
-                  <span>Progress</span>
-                </CardTitle>
-                <div className="text-4xl font-black text-[#2C3E50] group-hover:text-[#F1C40F] transition-colors duration-300">
-                  {completedProgress}
-                </div>
-                <p className="text-sm text-[#2C3E50]/60 font-medium">Dari {totalProgress}</p>
-              </div>
-              <div className="p-4 rounded-2xl bg-[#F1C40F]/10 group-hover:bg-[#F1C40F]/20 transition-all duration-300 group-hover:scale-110">
-                <TrendingUp className="h-8 w-8 text-[#F1C40F] group-hover:rotate-12 transition-transform duration-300" />
-              </div>
-            </CardHeader>
-          </Card>
-
-          {/* Tes Selesai Card */}
-          <Card className="group relative overflow-hidden border-0 bg-white/90 backdrop-blur-sm shadow-2xl hover:shadow-3xl transition-all duration-500 rounded-3xl hover:-translate-y-2 hover:rotate-1">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#2C3E50]/10 via-transparent to-[#2C3E50]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-4 p-8">
-              <div className="space-y-2">
-                <CardTitle className="text-sm font-bold text-[#2C3E50]/70 uppercase tracking-wide flex items-center space-x-2">
-                  <Award className="h-4 w-4" />
-                  <span>Tes Selesai</span>
-                </CardTitle>
-                <div className="text-4xl font-black text-[#2C3E50] group-hover:text-[#2C3E50] transition-colors duration-300">
-                  0
-                </div>
-                <p className="text-sm text-[#2C3E50]/60 font-medium">Evaluasi lengkap</p>
-              </div>
-              <div className="p-4 rounded-2xl bg-[#2C3E50]/10 group-hover:bg-[#2C3E50]/20 transition-all duration-300 group-hover:scale-110">
-                <Award className="h-8 w-8 text-[#2C3E50] group-hover:rotate-12 transition-transform duration-300" />
-              </div>
-            </CardHeader>
-          </Card>
-
-          {/* Tingkat Kemajuan Card */}
-          <Card className="group relative overflow-hidden border-0 bg-white/90 backdrop-blur-sm shadow-2xl hover:shadow-3xl transition-all duration-500 rounded-3xl hover:-translate-y-2 hover:rotate-1">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 via-transparent to-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-4 p-8">
-              <div className="space-y-2">
-                <CardTitle className="text-sm font-bold text-[#2C3E50]/70 uppercase tracking-wide flex items-center space-x-2">
-                  <BarChart3 className="h-4 w-4" />
-                  <span>Kemajuan</span>
-                </CardTitle>
-                <div className="text-4xl font-black text-[#2C3E50] group-hover:text-green-600 transition-colors duration-300">
-                  {totalProgress > 0 ? Math.round((completedProgress / totalProgress) * 100) : 0}%
-                </div>
-                <p className="text-sm text-[#2C3E50]/60 font-medium">Rata-rata kelas</p>
-              </div>
-              <div className="p-4 rounded-2xl bg-green-500/10 group-hover:bg-green-500/20 transition-all duration-300 group-hover:scale-110">
-                <BarChart3 className="h-8 w-8 text-green-600 group-hover:rotate-12 transition-transform duration-300" />
-              </div>
-            </CardHeader>
-          </Card>
-        </div>
-
-        {/* Main Content Grid with Enhanced Layout */}
+        {/* Main Content Grid */}
         <div className="grid lg:grid-cols-4 gap-10">
-          {/* Room Info Section - Enhanced Design */}
+          {/* Room Info Section */}
           <div className="lg:col-span-3 space-y-8">
             {/* Room Information Card */}
-            <Card className="border-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-[#147E7E]/5 via-transparent to-[#F1C40F]/5 p-10 border-b border-[#D5DBDB]/20">
-                <div className="flex items-center space-x-4">
-                  <div className="p-3 rounded-2xl bg-[#147E7E]/10">
-                    <Target className="h-8 w-8 text-[#147E7E]" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-3xl font-bold text-[#2C3E50]">Informasi Kelas</CardTitle>
-                    <CardDescription className="text-[#2C3E50]/70 text-lg">
-                      Detail lengkap tentang kelas dan pengaturannya
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-10 space-y-8">
-                <div className="grid md:grid-cols-2 gap-8">
-                  <div className="space-y-6">
-                    <div className="p-6 rounded-2xl bg-[#D5DBDB]/10 border border-[#D5DBDB]/20">
-                      <h4 className="font-bold text-[#2C3E50]/70 mb-3 uppercase tracking-wide text-sm flex items-center space-x-2">
-                        <BookOpen className="h-4 w-4" />
-                        <span>Nama Kelas</span>
-                      </h4>
-                      <p className="text-2xl font-bold text-[#2C3E50]">{room.name}</p>
-                    </div>
-                    <div className="p-6 rounded-2xl bg-[#D5DBDB]/10 border border-[#D5DBDB]/20">
-                      <h4 className="font-bold text-[#2C3E50]/70 mb-3 uppercase tracking-wide text-sm flex items-center space-x-2">
-                        <Calendar className="h-4 w-4" />
-                        <span>Dibuat</span>
-                      </h4>
-                      <p className="text-lg font-semibold text-[#2C3E50]">
-                        {new Date(room.created_at).toLocaleDateString("id-ID", { 
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
-                        })}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="space-y-6">
-                    <div className="p-6 rounded-2xl bg-[#147E7E]/5 border border-[#147E7E]/20">
-                      <h4 className="font-bold text-[#2C3E50]/70 mb-3 uppercase tracking-wide text-sm flex items-center space-x-2">
-                        <Target className="h-4 w-4" />
-                        <span>Kode Kelas</span>
-                      </h4>
-                      <div className="flex items-center space-x-4">
-                        <Badge className="text-2xl font-mono px-6 py-3 bg-[#147E7E]/10 text-[#147E7E] border border-[#147E7E]/30 hover:bg-[#147E7E]/20">
-                          {room.code}
-                        </Badge>
-                        <Button size="lg" className="group bg-[#147E7E] hover:bg-[#2C3E50] text-white rounded-xl transition-all duration-300 hover:scale-105">
-                          <Copy className="h-5 w-5 group-hover:rotate-12 transition-transform duration-300" />
-                        </Button>
-                      </div>
-                      <p className="text-sm text-[#2C3E50]/60 mt-3 font-medium">Bagikan kode ini kepada murid untuk bergabung</p>
-                    </div>
-                    <div className="p-6 rounded-2xl bg-[#F1C40F]/5 border border-[#F1C40F]/20">
-                      <h4 className="font-bold text-[#2C3E50]/70 mb-3 uppercase tracking-wide text-sm flex items-center space-x-2">
-                        <Clock className="h-4 w-4" />
-                        <span>Status</span>
-                      </h4>
-                      <div className="flex items-center space-x-3">
-                        <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                        <span className="text-lg font-bold text-green-600">Aktif</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="p-6 rounded-2xl bg-[#2C3E50]/5 border border-[#2C3E50]/20">
-                  <h4 className="font-bold text-[#2C3E50]/70 mb-3 uppercase tracking-wide text-sm">Deskripsi</h4>
-                  <p className="text-lg text-[#2C3E50]/80 leading-relaxed">
-                    {room.description || "Tidak ada deskripsi untuk kelas ini."}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Students List Card */}
-            <Card className="border-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-[#F1C40F]/5 via-transparent to-[#147E7E]/5 p-10 border-b border-[#D5DBDB]/20">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-6 md:space-y-0">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <Card className="border-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-teal-50 via-white to-yellow-50 p-10 border-b border-gray-100">
                   <div className="flex items-center space-x-4">
-                    <div className="p-3 rounded-2xl bg-[#F1C40F]/10">
-                      <Users className="h-8 w-8 text-[#F1C40F]" />
-                    </div>
+                    <motion.div 
+                      className="p-3 rounded-2xl bg-gradient-to-br from-teal-600 to-teal-700 shadow-lg"
+                      whileHover={{ rotate: 360 }}
+                      transition={{ duration: 0.6 }}
+                    >
+                      <Target className="h-8 w-8 text-white" />
+                    </motion.div>
                     <div>
-                      <CardTitle className="text-3xl font-bold text-[#2C3E50]">Daftar Murid</CardTitle>
-                      <CardDescription className="text-[#2C3E50]/70 text-lg">
-                        {students?.length || 0} murid terdaftar di kelas ini
+                      <CardTitle className="text-3xl font-bold text-gray-900">Informasi Kelas</CardTitle>
+                      <CardDescription className="text-gray-600 text-lg mt-1">
+                        Detail lengkap tentang kelas dan pengaturannya
                       </CardDescription>
                     </div>
                   </div>
-                  <Link href={`/dashboard/guru/rooms/${roomId}/students`}>
-                    <Button className="group relative overflow-hidden font-bold px-8 py-4 rounded-xl bg-[#147E7E] text-white hover:bg-[#2C3E50] transition-all duration-300 hover:scale-105 shadow-xl">
-                      <span className="text-lg">Lihat Semua</span>
-                      <ArrowRight className="h-6 w-6 ml-3 group-hover:translate-x-1 transition-transform duration-300" />
-                    </Button>
-                  </Link>
-                </div>
-              </CardHeader>
-              <CardContent className="p-10">
-                {students && students.length > 0 ? (
-                  <div className="space-y-4">
-                    {students.slice(0, 5).map((enrollment) => (
-                      <div
-                        key={enrollment.enrollment_id}
-                        className="group relative overflow-hidden p-6 bg-gradient-to-r from-[#D5DBDB]/20 via-white/50 to-[#D5DBDB]/20 rounded-2xl border border-[#D5DBDB]/30 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                </CardHeader>
+                <CardContent className="p-10 space-y-8">
+                  <div className="grid md:grid-cols-2 gap-8">
+                    <div className="space-y-6">
+                      <motion.div 
+                        className="p-6 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100/50 border border-gray-200"
+                        whileHover={{ scale: 1.02, shadow: "0 20px 25px -5px rgba(0,0,0,0.1)" }}
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <div className="w-12 h-12 rounded-xl bg-[#147E7E]/10 flex items-center justify-center border border-[#147E7E]/20">
-                              <Users className="h-6 w-6 text-[#147E7E]" />
-                            </div>
-                            <div>
-                              <p className="text-xl font-bold text-[#2C3E50] group-hover:text-[#147E7E] transition-colors duration-300">
-                                {enrollment.users?.name}
-                              </p>
-                              <p className="text-sm text-[#2C3E50]/60 font-medium">{enrollment.users?.email}</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="px-4 py-2 rounded-xl bg-[#F1C40F]/10 border border-[#F1C40F]/20">
-                              <p className="text-sm font-bold text-[#2C3E50]/70 uppercase tracking-wide">Bergabung</p>
-                              <p className="text-lg font-semibold text-[#F1C40F]">
-                                {new Date(enrollment.joined_at).toLocaleDateString("id-ID")}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    {students.length > 5 && (
-                      <div className="text-center pt-6">
-                        <Link href={`/dashboard/guru/rooms/${roomId}/students`}>
-                          <Button className="group font-bold px-8 py-4 rounded-xl border-2 border-[#147E7E] text-[#147E7E] bg-transparent hover:bg-[#147E7E] hover:text-white transition-all duration-300 hover:scale-105 text-lg">
-                            <span>Lihat {students.length - 5} murid lainnya</span>
-                            <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
-                          </Button>
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-20">
-                    <div className="mx-auto mb-8 p-8 rounded-3xl bg-[#D5DBDB]/20 w-fit">
-                      <Users className="h-20 w-20 mx-auto text-[#2C3E50]/30" />
+                        <h4 className="font-bold text-gray-700 mb-3 uppercase tracking-wide text-sm flex items-center space-x-2">
+                          <BookOpen className="h-4 w-4" />
+                          <span>Nama Kelas</span>
+                        </h4>
+                        <p className="text-2xl font-bold text-gray-900">{room.name}</p>
+                      </motion.div>
+                      <motion.div 
+                        className="p-6 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100/50 border border-gray-200"
+                        whileHover={{ scale: 1.02, shadow: "0 20px 25px -5px rgba(0,0,0,0.1)" }}
+                      >
+                        <h4 className="font-bold text-gray-700 mb-3 uppercase tracking-wide text-sm flex items-center space-x-2">
+                          <Calendar className="h-4 w-4" />
+                          <span>Dibuat</span>
+                        </h4>
+                        <p className="text-lg font-semibold text-gray-900">
+                          {new Date(room.created_at).toLocaleDateString("id-ID", { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                          })}
+                        </p>
+                      </motion.div>
                     </div>
-                    <h3 className="text-3xl font-bold text-[#2C3E50] mb-4">Belum ada murid</h3>
-                    <p className="text-[#2C3E50]/60 mb-10 text-xl max-w-lg mx-auto leading-relaxed">
-                      Bagikan kode kelas <span className="font-bold text-[#147E7E]">{room.code}</span> kepada murid untuk bergabung
-                    </p>
+                    <div className="space-y-6">
+                      <motion.div 
+                        className="p-6 rounded-2xl bg-gradient-to-br from-teal-50 to-teal-100/50 border border-teal-200"
+                        whileHover={{ scale: 1.02, shadow: "0 20px 25px -5px rgba(0,0,0,0.1)" }}
+                      >
+                        <h4 className="font-bold text-gray-700 mb-3 uppercase tracking-wide text-sm flex items-center space-x-2">
+                          <Target className="h-4 w-4" />
+                          <span>Kode Kelas</span>
+                        </h4>
+                        <div className="flex items-center space-x-4">
+                          <Badge className="text-2xl font-mono px-6 py-3 bg-white border-2 border-teal-300 text-teal-700 hover:bg-teal-50 shadow-lg">
+                            {room.code}
+                          </Badge>
+                          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                            <Button 
+                              size="lg" 
+                              onClick={handleCopyCode}
+                              className={`group rounded-xl transition-all duration-300 ${
+                                copied 
+                                  ? 'bg-green-600 hover:bg-green-700' 
+                                  : 'bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800'
+                              } text-white shadow-lg`}
+                            >
+                              <AnimatePresence mode="wait">
+                                {copied ? (
+                                  <motion.div
+                                    key="check"
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    exit={{ scale: 0 }}
+                                  >
+                                    <Check className="h-5 w-5" />
+                                  </motion.div>
+                                ) : (
+                                  <motion.div
+                                    key="copy"
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    exit={{ scale: 0 }}
+                                  >
+                                    <Copy className="h-5 w-5 group-hover:rotate-12 transition-transform duration-300" />
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </Button>
+                          </motion.div>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-3 font-medium">Bagikan kode ini kepada murid</p>
+                      </motion.div>
+                      <motion.div 
+                        className="p-6 rounded-2xl bg-gradient-to-br from-yellow-50 to-yellow-100/50 border border-yellow-200"
+                        whileHover={{ scale: 1.02, shadow: "0 20px 25px -5px rgba(0,0,0,0.1)" }}
+                      >
+                        <h4 className="font-bold text-gray-700 mb-3 uppercase tracking-wide text-sm flex items-center space-x-2">
+                          <Clock className="h-4 w-4" />
+                          <span>Status</span>
+                        </h4>
+                        <div className="flex items-center space-x-3">
+                          <motion.div 
+                            className="w-3 h-3 bg-green-500 rounded-full"
+                            animate={{ scale: [1, 1.2, 1] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                          />
+                          <span className="text-lg font-bold text-green-600">Aktif</span>
+                        </div>
+                      </motion.div>
+                    </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                  
+                  {room.description && (
+                    <motion.div 
+                      className="p-6 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100/50 border border-gray-200"
+                      whileHover={{ scale: 1.01, shadow: "0 20px 25px -5px rgba(0,0,0,0.1)" }}
+                    >
+                      <h4 className="font-bold text-gray-700 mb-3 uppercase tracking-wide text-sm">Deskripsi</h4>
+                      <p className="text-lg text-gray-700 leading-relaxed">
+                        {room.description}
+                      </p>
+                    </motion.div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Students List Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <Card className="border-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-yellow-50 via-white to-teal-50 p-10 border-b border-gray-100">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-6 md:space-y-0">
+                    <div className="flex items-center space-x-4">
+                      <motion.div 
+                        className="p-3 rounded-2xl bg-gradient-to-br from-yellow-400 to-yellow-500 shadow-lg"
+                        whileHover={{ rotate: 360 }}
+                        transition={{ duration: 0.6 }}
+                      >
+                        <Users className="h-8 w-8 text-white" />
+                      </motion.div>
+                      <div>
+                        <CardTitle className="text-3xl font-bold text-gray-900">Daftar Murid</CardTitle>
+                        <CardDescription className="text-gray-600 text-lg mt-1">
+                          {students?.length || 0} murid terdaftar di kelas ini
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <Link href={`/dashboard/guru/rooms/${roomId}/students`}>
+                      <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                        <Button className="group font-bold px-8 py-4 rounded-xl bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white shadow-xl hover:shadow-2xl transition-all duration-300 text-lg">
+                          <span>Lihat Semua</span>
+                          <ArrowRight className="h-6 w-6 ml-3 group-hover:translate-x-1 transition-transform duration-300" />
+                        </Button>
+                      </motion.div>
+                    </Link>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-10">
+                  {students && students.length > 0 ? (
+                    <motion.div 
+                      className="space-y-4"
+                      variants={staggerContainer}
+                      initial="hidden"
+                      animate="visible"
+                    >
+                      {students.slice(0, 5).map((enrollment, index) => (
+                        <motion.div
+                          key={enrollment.enrollment_id}
+                          variants={fadeInUp}
+                          whileHover={{ y: -5, scale: 1.01 }}
+                        >
+                          <div className="group p-6 bg-gradient-to-r from-white to-gray-50/50 rounded-2xl border-2 border-gray-100 hover:border-teal-300 hover:shadow-xl transition-all duration-300">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-4">
+                                <motion.div 
+                                  className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-600 to-teal-700 flex items-center justify-center border-2 border-teal-500 shadow-lg"
+                                  whileHover={{ scale: 1.1, rotate: 5 }}
+                                >
+                                  <Users className="h-6 w-6 text-white" />
+                                </motion.div>
+                                <div>
+                                  <p className="text-xl font-bold text-gray-900 group-hover:text-teal-600 transition-colors duration-300">
+                                    {enrollment.users?.name}
+                                  </p>
+                                  <p className="text-sm text-gray-600 font-medium">{enrollment.users?.email}</p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <div className="px-4 py-2 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-500 shadow-lg">
+                                  <p className="text-sm font-bold text-white uppercase tracking-wide">Bergabung</p>
+                                  <p className="text-lg font-semibold text-white">
+                                    {new Date(enrollment.joined_at).toLocaleDateString("id-ID")}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                      {students.length > 5 && (
+                        <div className="text-center pt-6">
+                          <Link href={`/dashboard/guru/rooms/${roomId}/students`}>
+                            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                              <Button className="group font-bold px-8 py-4 rounded-xl border-2 border-teal-600 text-teal-700 bg-transparent hover:bg-teal-600 hover:text-white transition-all duration-300 text-lg shadow-lg">
+                                <span>Lihat {students.length - 5} murid lainnya</span>
+                                <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                              </Button>
+                            </motion.div>
+                          </Link>
+                        </div>
+                      )}
+                    </motion.div>
+                  ) : (
+                    <motion.div 
+                      className="text-center py-20"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                    >
+                      <motion.div 
+                        className="mx-auto mb-8 p-8 rounded-3xl bg-gradient-to-br from-teal-50 to-yellow-50 w-fit"
+                        animate={{
+                          y: [0, -10, 0],
+                        }}
+                        transition={{
+                          duration: 3,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      >
+                        <Users className="h-20 w-20 mx-auto text-teal-600" />
+                      </motion.div>
+                      <h3 className="text-3xl font-bold text-gray-900 mb-4">Belum ada murid</h3>
+                      <p className="text-gray-600 mb-10 text-xl max-w-lg mx-auto leading-relaxed">
+                        Bagikan kode kelas <span className="font-bold text-teal-600">{room.code}</span> kepada murid untuk bergabung
+                      </p>
+                    </motion.div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
 
-          {/* Sidebar - Enhanced Statistics Summary */}
-          <div className="space-y-6">
+          {/* Sidebar */}
+          <motion.div 
+            className="space-y-6"
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5 }}
+          >
             <Card className="border-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-[#2C3E50]/10 to-transparent p-8">
-                <CardTitle className="text-2xl font-bold text-[#2C3E50] flex items-center space-x-3">
-                  <div className="p-2 rounded-xl bg-[#2C3E50]/20">
-                    <BarChart3 className="h-6 w-6 text-[#2C3E50]" />
-                  </div>
+              <CardHeader className="bg-gradient-to-r from-gray-50 to-transparent p-8">
+                <CardTitle className="text-2xl font-bold text-gray-900 flex items-center space-x-3">
+                  <motion.div 
+                    className="p-2 rounded-xl bg-gray-200"
+                    whileHover={{ rotate: 360 }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    <BarChart3 className="h-6 w-6 text-gray-700" />
+                  </motion.div>
                   <span>Statistik Kelas</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-8 space-y-6">
-                <div className="text-center p-6 bg-[#147E7E]/5 rounded-2xl border border-[#147E7E]/10">
-                  <div className="text-4xl font-black text-[#147E7E] mb-2">{students?.length || 0}</div>
-                  <div className="text-sm text-[#2C3E50]/60 font-semibold uppercase tracking-wide">Total Murid</div>
-                </div>
-                <div className="text-center p-6 bg-[#F1C40F]/5 rounded-2xl border border-[#F1C40F]/10">
-                  <div className="text-4xl font-black text-[#F1C40F] mb-2">{completedProgress}</div>
-                  <div className="text-sm text-[#2C3E50]/60 font-semibold uppercase tracking-wide">Progress Selesai</div>
-                </div>
-                <div className="text-center p-6 bg-green-500/5 rounded-2xl border border-green-500/10">
-                  <div className="text-4xl font-black text-green-600 mb-2">
-                    {totalProgress > 0 ? Math.round((completedProgress / totalProgress) * 100) : 0}%
-                  </div>
-                  <div className="text-sm text-[#2C3E50]/60 font-semibold uppercase tracking-wide">Tingkat Kemajuan</div>
-                </div>
+                {[
+                  { value: students?.length || 0, label: "Total Murid", color: "from-teal-600 to-teal-700", bg: "from-teal-50 to-teal-100/50" },
+                  { value: completedProgress, label: "Progress Selesai", color: "from-yellow-400 to-yellow-500", bg: "from-yellow-50 to-yellow-100/50" },
+                  { value: `${totalProgress > 0 ? Math.round((completedProgress / totalProgress) * 100) : 0}%`, label: "Tingkat Kemajuan", color: "from-green-500 to-green-600", bg: "from-green-50 to-green-100/50" }
+                ].map((stat, index) => (
+                  <motion.div 
+                    key={index}
+                    className={`text-center p-6 bg-gradient-to-br ${stat.bg} rounded-2xl border-2 border-opacity-50`}
+                    whileHover={{ scale: 1.05, y: -5 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="text-4xl font-black text-gray-900 mb-2">{stat.value}</div>
+                    <div className="text-sm text-gray-700 font-semibold uppercase tracking-wide">{stat.label}</div>
+                    <motion.div 
+                      className={`mt-4 h-2 bg-gradient-to-r ${stat.color} rounded-full`}
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: 1 }}
+                      transition={{ duration: 1, delay: index * 0.2 }}
+                    />
+                  </motion.div>
+                ))}
               </CardContent>
             </Card>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>
