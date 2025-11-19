@@ -104,8 +104,6 @@ export default function RoomDetailPage({ params }: Props) {
                 <div>
                   <div className="flex items-center space-x-3 mb-2">
                     <h1 className="text-3xl font-bold text-white tracking-tight">{room.name}</h1>
-                    <div className="px-3 py-1 rounded-full bg-[#F1C40F]/20 border border-[#F1C40F]/30">
-                    </div>
                   </div>
                   <p className="text-base text-white/90 font-medium">Detail Kelas & Manajemen Murid</p>
                   <p className="text-sm text-white/70 mt-1">Pantau progres dan kelola pembelajaran</p>
@@ -372,7 +370,8 @@ export default function RoomDetailPage({ params }: Props) {
             </Card>
           </div>
 
-            {/* Enhanced Statistics Summary */}
+          {/* Sidebar - Enhanced Statistics Summary */}
+          <div className="space-y-6">
             <Card className="border-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden">
               <CardHeader className="bg-gradient-to-r from-[#2C3E50]/10 to-transparent p-8">
                 <CardTitle className="text-2xl font-bold text-[#2C3E50] flex items-center space-x-3">
@@ -399,28 +398,6 @@ export default function RoomDetailPage({ params }: Props) {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Class Settings Card */}
-            {/* <Card className="border-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-[#147E7E]/10 to-transparent p-8">
-                <CardTitle className="text-2xl font-bold text-[#2C3E50] flex items-center space-x-3">
-                  <div className="p-2 rounded-xl bg-[#147E7E]/20">
-                    <Settings className="h-6 w-6 text-[#147E7E]" />
-                  </div>
-                  <span>Pengaturan</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-8 space-y-4">
-                <Button variant="outline" className="group w-full font-semibold py-4 rounded-xl border-2 border-[#D5DBDB] bg-transparent text-[#2C3E50] hover:bg-[#D5DBDB]/30 transition-all duration-300 hover:scale-105">
-                  <Settings className="h-5 w-5 mr-3 group-hover:rotate-12 transition-transform duration-300" />
-                  <span>Edit Kelas</span>
-                </Button>
-                <Button variant="outline" className="group w-full font-semibold py-4 rounded-xl border-2 border-red-200 bg-transparent text-red-600 hover:bg-red-50 transition-all duration-300 hover:scale-105">
-                  <Target className="h-5 w-5 mr-3 group-hover:rotate-12 transition-transform duration-300" />
-                  <span>Arsipkan Kelas</span>
-                </Button>
-              </CardContent>
-            </Card> */}
           </div>
         </div>
       </div>
