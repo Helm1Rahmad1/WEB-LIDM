@@ -426,6 +426,57 @@ export default function RoomStudentsPage({ params }: Props) {
                                       <h3 className="text-2xl font-bold text-gray-900 group-hover:text-teal-600 transition-colors duration-300 mb-2">
                                         {enrollment.users?.name || "Nama tidak tersedia"}
                                       </h3>
+                                      <div className="flex flex-wrap items-center gap-3 text-sm">
+                                        <motion.div 
+                                          className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-teal-50 border border-teal-200"
+                                          whileHover={{ scale: 1.05 }}
+                                        >
+                                          <Mail className="h-4 w-4 text-teal-600" />
+                                          <span className="text-gray-700 font-medium">
+                                            {enrollment.users?.email || "Email tidak tersedia"}
+                                          </span>
+                                        </motion.div>
+                                        <motion.div 
+                                          className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-yellow-50 border border-yellow-200"
+                                          whileHover={{ scale: 1.05 }}
+                                        >
+                                          <Calendar className="h-4 w-4 text-yellow-600" />
+                                          <span className="text-gray-700 font-medium">
+                                            Bergabung {new Date(enrollment.joined_at).toLocaleDateString("id-ID")}
+                                          </span>
+                                        </motion.div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Stats */}
+                                  <div className="grid sm:grid-cols-1 lg:grid-cols-3 gap-6">
+                                    {/* Total Halaman */}
+                                    <motion.div 
+                                      className="group/stat relative overflow-hidden p-6 bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl border-2 border-blue-200/50 hover:shadow-xl transition-all duration-300"
+                                      whileHover={{ y: -5, scale: 1.02 }}
+                                    >
+                                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300"></div>
+                                      <div className="relative">
+                                        <div className="flex items-center justify-between mb-4">
+                                          <div className="flex items-center space-x-3">
+                                            <motion.div 
+                                              className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20"
+                                              whileHover={{ rotate: 360 }}
+                                              transition={{ duration: 0.6 }}
+                                            >
+                                              <FileText className="h-5 w-5 text-blue-600" />
+                                            </motion.div>
+                                            <span className="text-sm font-bold text-blue-900 uppercase tracking-wide">
+                                              Total Halaman
+                                            </span>
+                                          </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                          <div className="text-3xl font-black text-blue-900">
+                                            {totalCompletedPages}/{totalPages}
+                                          </div>
+                                          <div className="flex items-center space-x-2">
                                             <BookOpen className="h-4 w-4 text-blue-600" />
                                             <span className="text-sm font-medium text-blue-700">halaman pembelajaran</span>
                                           </div>
