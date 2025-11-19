@@ -37,7 +37,16 @@ router.get('/', async (req: AuthRequest, res) => {
     let params;
 
     if (role === 'guru') {
-      query = 'SELECT * FROM rooms WHERE created_by = $1 ORDER BY created_at DESC';
+      // Query untuk guru: ambil rooms yang dibuat dan hitung jumlah murid
+      query = `
+        SELECT r.*, 
+          COALESCE(COUNT(e.enrollment_id), 0)::integer as student_count
+        FROM rooms r
+        LEFT JOIN enrollments e ON r.room_id = e.room_id
+        WHERE r.created_by = $1
+        GROUP BY r.room_id
+        ORDER BY r.created_at DESC
+      `;
       params = [userId];
     } else {
       query = `
