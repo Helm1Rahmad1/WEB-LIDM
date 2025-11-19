@@ -76,6 +76,8 @@ export default function GuruDashboardPage() {
 
   // Calculate total students from actual rooms data
   const totalStudents = rooms.reduce((sum, r) => {
+    // Count enrollments for each room
+    // Assuming enrollments is an array or count property
     return sum + (r.student_count || 0)
   }, 0)
 
@@ -260,7 +262,7 @@ export default function GuruDashboardPage() {
                             </div>
                             <div className="flex items-center space-x-2 bg-[#F1C40F]/10 px-4 py-2 rounded-xl border border-[#F1C40F]/20">
                               <Users className="h-5 w-5 text-[#F1C40F]" />
-                              <span className="font-bold text-[#2C3E50] text-lg">{room.student_count || 0}</span>
+                              <span className="font-bold text-[#2C3E50] text-lg">{room.enrollments?.[0]?.count || 0}</span>
                               <span className="text-sm text-[#2C3E50]/60 font-medium">murid</span>
                             </div>
                           </div>
@@ -306,30 +308,6 @@ export default function GuruDashboardPage() {
 
           {/* Enhanced Sidebar */}
           <div className="space-y-8">
-            {/* Quick Actions Card */}
-            {/* <Card className="border-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-[#F1C40F]/10 to-transparent p-8">
-                <CardTitle className="text-2xl font-bold text-[#2C3E50] flex items-center space-x-3">
-                  <div className="p-2 rounded-xl bg-[#F1C40F]/20">
-                    <TrendingUp className="h-6 w-6 text-[#F1C40F]" />
-                  </div>
-                  <span>Aksi Cepat</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-8 space-y-6">
-                <Link href="/dashboard/guru/rooms/create">
-                  <Button className="group relative overflow-hidden w-full font-bold py-5 rounded-xl bg-[#147E7E] text-white hover:bg-[#2C3E50] transition-all duration-300 hover:scale-105 shadow-xl text-lg">
-                    <Plus className="h-6 w-6 mr-3 group-hover:rotate-180 transition-transform duration-500" />
-                    <span>Buat Kelas Baru</span>
-                    <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-2 transition-transform duration-300" />
-                  </Button>
-                </Link>
-                <Button variant="outline" className="group w-full font-semibold py-5 rounded-xl border-2 border-[#D5DBDB] bg-transparent text-[#2C3E50] hover:bg-[#D5DBDB]/30 transition-all duration-300 hover:scale-105 text-lg">
-                  <Settings className="h-6 w-6 mr-3 group-hover:rotate-12 transition-transform duration-300" />
-                  <span>Pengaturan</span>
-                </Button>
-              </CardContent>
-            </Card> */}
 
             {/* Enhanced Statistics Summary */}
             <Card className="border-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden">
