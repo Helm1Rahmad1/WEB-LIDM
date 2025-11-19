@@ -37,20 +37,43 @@ router.get('/', async (req: AuthRequest, res) => {
     let params;
 
     if (role === 'guru') {
-      query = 'SELECT * FROM rooms WHERE created_by = $1 ORDER BY created_at DESC';
+      // Query untuk guru: ambil semua kelas yang dibuat, plus hitung jumlah murid
+      query = `
+        SELECT 
+          r.*,
+          COUNT(DISTINCT e.user_id) as student_count
+        FROM rooms r
+        LEFT JOIN enrollments e ON r.room_id = e.room_id
+        WHERE r.created_by = $1
+        GROUP BY r.room_id
+        ORDER BY r.created_at DESC
+      `;
       params = [userId];
     } else {
+      // Query untuk murid: ambil kelas yang diikuti
       query = `
-        SELECT r.* FROM rooms r
+        SELECT 
+          r.*,
+          COUNT(DISTINCT e2.user_id) as student_count
+        FROM rooms r
         INNER JOIN enrollments e ON r.room_id = e.room_id
+        LEFT JOIN enrollments e2 ON r.room_id = e2.room_id
         WHERE e.user_id = $1
+        GROUP BY r.room_id, e.joined_at
         ORDER BY e.joined_at DESC
       `;
       params = [userId];
     }
 
     const result = await pool.query(query, params);
-    res.json({ rooms: result.rows });
+    
+    // Convert student_count dari string ke number
+    const rooms = result.rows.map(room => ({
+      ...room,
+      student_count: parseInt(room.student_count) || 0
+    }));
+    
+    res.json({ rooms });
   } catch (error) {
     console.error('Get rooms error:', error);
     res.status(500).json({ error: 'Internal server error' });
