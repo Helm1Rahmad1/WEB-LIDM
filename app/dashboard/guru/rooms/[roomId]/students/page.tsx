@@ -16,7 +16,6 @@ import {
   Award,
   Target,
   BarChart3,
-  Sparkles,
   User,
   ArrowRight,
   Trophy,
@@ -182,7 +181,6 @@ export default function RoomStudentsPage({ params }: Props) {
                   <div className="flex items-center space-x-3 mb-2">
                     <h1 className="text-3xl font-bold text-white tracking-tight">Murid - {room.name}</h1>
                     <div className="px-3 py-1 rounded-full bg-[#F1C40F]/20 border border-[#F1C40F]/30">
-                      <Sparkles className="h-4 w-4 text-[#F1C40F]" />
                     </div>
                   </div>
                   <p className="text-base text-white/90 font-medium">{students.length} murid terdaftar di kelas</p>
@@ -398,7 +396,6 @@ export default function RoomStudentsPage({ params }: Props) {
                   <Button className="group relative overflow-hidden font-bold px-10 py-5 rounded-xl bg-[#147E7E] text-white hover:bg-[#2C3E50] transition-all duration-300 hover:scale-105 shadow-2xl text-xl">
                     <BookOpen className="h-7 w-7 mr-3 group-hover:rotate-12 transition-transform duration-500" />
                     <span>Panduan Bergabung</span>
-                    <Sparkles className="h-6 w-6 ml-3 group-hover:rotate-12 transition-transform duration-300" />
                   </Button>
                 </div>
               </div>

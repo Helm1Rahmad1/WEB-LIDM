@@ -5,7 +5,7 @@ import { useEffect, useState, Suspense } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { CheckCircle, XCircle, Loader2, Mail, AlertCircle, ArrowRight, Sparkles } from "lucide-react"
+import { CheckCircle, XCircle, Loader2, Mail, AlertCircle, ArrowRight } from "lucide-react"
 import { motion } from "framer-motion"
 
 // Disable static generation for this page

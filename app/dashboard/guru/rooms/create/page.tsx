@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, BookOpen, Plus, Sparkles, Target, Users, Code, Info } from "lucide-react"
+import { ArrowLeft, BookOpen, Plus, Target, Users, Code, Info } from "lucide-react"
 import Link from "next/link"
 
 export default function CreateRoomPage() {
@@ -94,7 +94,6 @@ export default function CreateRoomPage() {
             {/* Decorative Element */}
             <div className="hidden lg:flex items-center space-x-3">
               <div className="px-4 py-2 rounded-full bg-[#F1C40F]/20 border border-[#F1C40F]/30 flex items-center space-x-2">
-                <Sparkles className="h-5 w-5 text-[#F1C40F]" />
                 <span className="text-white font-semibold text-sm">Langkah Mudah</span>
               </div>
             </div>
@@ -224,7 +223,6 @@ export default function CreateRoomPage() {
                         <>
                           <Plus className="h-6 w-6 mr-3 group-hover:rotate-180 transition-transform duration-500" />
                           <span>Buat Kelas</span>
-                          <Sparkles className="h-5 w-5 ml-3 group-hover:rotate-12 transition-transform duration-300" />
                         </>
                       )}
                     </Button>
@@ -275,7 +273,6 @@ export default function CreateRoomPage() {
               <CardHeader className="bg-gradient-to-r from-[#147E7E]/10 to-transparent p-8">
                 <CardTitle className="text-xl font-bold text-[#2C3E50] flex items-center space-x-3">
                   <div className="p-2 rounded-xl bg-[#147E7E]/20">
-                    <Sparkles className="h-6 w-6 text-[#147E7E]" />
                   </div>
                   <span>Tips Sukses</span>
                 </CardTitle>

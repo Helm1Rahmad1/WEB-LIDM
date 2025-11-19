@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, BookOpen, Award, Plus, TrendingUp, ArrowRight, Sparkles, Target, BarChart3, LogOut } from "lucide-react"
+import { Users, BookOpen, Award, Plus, TrendingUp, ArrowRight, Target, BarChart3, LogOut } from "lucide-react"
 import Link from "next/link"
 import apiClient from "@/lib/api-client"
 
@@ -263,7 +263,6 @@ export default function GuruDashboardPage() {
               <div>
                 <div className="flex items-center space-x-2 mb-1">
                   <h1 className="text-2xl font-bold text-white tracking-tight">Dashboard Guru</h1>
-                  <Sparkles className="h-5 w-5 text-yellow-400 animate-pulse" />
                 </div>
                 <p className="text-sm text-white/90 font-medium">
                   Selamat datang, <span className="text-yellow-400 font-bold">{user?.name || user?.email || 'Guru'}</span>

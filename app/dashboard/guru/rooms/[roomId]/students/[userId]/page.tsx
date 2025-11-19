@@ -22,7 +22,6 @@ import {
   CheckCircle,
   Circle,
   Trophy,
-  Sparkles,
   BarChart3,
   FileText,
   X,
@@ -376,7 +375,6 @@ export default function StudentDetailPage({ params }: Props) {
                   <div className="flex items-center space-x-3 mb-2">
                     <h1 className="text-3xl font-bold text-white tracking-tight">{student.name}</h1>
                     <div className="px-3 py-1 rounded-full bg-[#F1C40F]/20 border border-[#F1C40F]/30">
-                      <Sparkles className="h-4 w-4 text-[#F1C40F]" />
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-4 text-sm mb-2">

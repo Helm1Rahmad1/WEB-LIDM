@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, BookOpen, ArrowRight, Mail, RefreshCw, Sparkles } from "lucide-react"
+import { CheckCircle, BookOpen, ArrowRight, Mail, RefreshCw } from "lucide-react"
 import Link from "next/link"
 
 // Fix build error - disable static generation

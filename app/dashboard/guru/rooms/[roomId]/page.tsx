@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Users, Copy, BookOpen, Award, TrendingUp, Sparkles, Target, BarChart3, Settings, ArrowRight, Calendar, Clock } from "lucide-react"
+import { ArrowLeft, Users, Copy, BookOpen, Award, TrendingUp, Target, BarChart3, Settings, ArrowRight, Calendar, Clock } from "lucide-react"
 import Link from "next/link"
 import apiClient from "@/lib/api-client"
 
@@ -105,7 +105,6 @@ export default function RoomDetailPage({ params }: Props) {
                   <div className="flex items-center space-x-3 mb-2">
                     <h1 className="text-3xl font-bold text-white tracking-tight">{room.name}</h1>
                     <div className="px-3 py-1 rounded-full bg-[#F1C40F]/20 border border-[#F1C40F]/30">
-                      <Sparkles className="h-4 w-4 text-[#F1C40F]" />
                     </div>
                   </div>
                   <p className="text-base text-white/90 font-medium">Detail Kelas & Manajemen Murid</p>
@@ -372,41 +371,6 @@ export default function RoomDetailPage({ params }: Props) {
               </CardContent>
             </Card>
           </div>
-
-          {/* Enhanced Sidebar */}
-          <div className="space-y-8">
-            {/* Quick Actions Card */}
-            {/* <Card className="border-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-[#F1C40F]/10 to-transparent p-8">
-                <CardTitle className="text-2xl font-bold text-[#2C3E50] flex items-center space-x-3">
-                  <div className="p-2 rounded-xl bg-[#F1C40F]/20">
-                    <Sparkles className="h-6 w-6 text-[#F1C40F]" />
-                  </div>
-                  <span>Aksi Cepat</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-8 space-y-6">
-                <Link href={`/dashboard/guru/rooms/${roomId}/students`}>
-                  <Button className="group relative overflow-hidden w-full font-bold py-5 rounded-xl bg-[#147E7E] text-white hover:bg-[#2C3E50] transition-all duration-300 hover:scale-105 shadow-xl text-lg">
-                    <Users className="h-6 w-6 mr-3 group-hover:rotate-12 transition-transform duration-500" />
-                    <span>Kelola Murid</span>
-                    <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-2 transition-transform duration-300" />
-                  </Button>
-                </Link>
-                <Link href={`/dashboard/guru/rooms/${roomId}/progress`}>
-                  <Button className="group w-full font-bold py-5 rounded-xl border-2 border-[#F1C40F] text-[#F1C40F] bg-transparent hover:bg-[#F1C40F] hover:text-white transition-all duration-300 hover:scale-105 text-lg">
-                    <TrendingUp className="h-6 w-6 mr-3 group-hover:rotate-12 transition-transform duration-300" />
-                    <span>Lihat Progress</span>
-                  </Button>
-                </Link>
-                <Link href={`/dashboard/guru/rooms/${roomId}/tests`}>
-                  <Button className="group w-full font-bold py-5 rounded-xl border-2 border-[#2C3E50] text-[#2C3E50] bg-transparent hover:bg-[#2C3E50] hover:text-white transition-all duration-300 hover:scale-105 text-lg">
-                    <Award className="h-6 w-6 mr-3 group-hover:rotate-12 transition-transform duration-300" />
-                    <span>Hasil Tes</span>
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card> */}
 
             {/* Enhanced Statistics Summary */}
             <Card className="border-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden">
