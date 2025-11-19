@@ -1,7 +1,8 @@
 "use client"
 
-import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import apiClient from "@/lib/api-client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -28,10 +29,9 @@ import {
   PlayCircle
 } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
 
 interface Props {
-  params: Promise<{ roomId: string; userId: string }>
+  params: { roomId: string; userId: string }
 }
 
 interface JilidProgress {
@@ -53,133 +53,26 @@ interface PageStatus {
   score?: number
 }
 
-// Hardcoded data untuk testing
-const HARDCODED_STUDENT_DATA = {
-  student: {
-    user_id: "123",
-    name: "Helmi",
-    email: "helmirahmadi@gmail.com"
-  },
-  room: {
-    room_id: 1,
-    name: "Kelas Hijaiyah A",
-    description: "Kelas belajar huruf hijaiyah untuk pemula"
-  },
-  enrollment: {
-    joined_at: "2025-08-01T10:30:00Z"
-  },
-  jilidProgress: [
-    {
-      jilid_id: 1,
-      jilid_name: "Jilid 1",
-      description: "Pengenalan huruf hijaiyah dasar",
-      total_letters: 10,
-      completed_letters: 8,
-      percentage: 80,
-      status: 'belajar' as const,
-      total_pages: 10,
-      completed_pages: 7,
-      pages_status: {
-        1: 'selesai' as const,
-        2: 'selesai' as const,
-        3: 'selesai' as const,
-        4: 'selesai' as const,
-        5: 'selesai' as const,
-        6: 'belajar' as const,
-        7: 'belajar' as const,
-        8: 'belum_mulai' as const,
-        9: 'belum_mulai' as const,
-        10: 'belum_mulai' as const,
-      }
-    },
-    {
-      jilid_id: 2,
-      jilid_name: "Jilid 2",
-      description: "Lanjutan huruf hijaiyah dengan harakat",
-      total_letters: 8,
-      completed_letters: 0,
-      percentage: 0,
-      status: 'belum_mulai' as const,
-      total_pages: 8,
-      completed_pages: 0,
-      pages_status: Object.fromEntries(Array.from({length: 15}, (_, i) => [i + 1, 'belum_mulai' as const]))
-    },
-    {
-      jilid_id: 3,
-      jilid_name: "Jilid 3",
-      description: "Huruf hijaiyah sambung dan tajwid dasar",
-      total_letters: 12,
-      completed_letters: 0,
-      percentage: 0,
-      status: 'belum_mulai' as const,
-      total_pages: 12,
-      completed_pages: 0,
-      pages_status: Object.fromEntries(Array.from({length: 15}, (_, i) => [i + 1, 'belum_mulai' as const]))
-    },
-    {
-      jilid_id: 4,
-      jilid_name: "Jilid 4",
-      description: "Membaca kata dan kalimat sederhana",
-      total_letters: 15,
-      completed_letters: 0,
-      percentage: 0,
-      status: 'belum_mulai' as const,
-      total_pages: 15,
-      completed_pages: 0,
-      pages_status: Object.fromEntries(Array.from({length: 15}, (_, i) => [i + 1, 'belum_mulai' as const]))
-    },
-    {
-      jilid_id: 5,
-      jilid_name: "Jilid 5",
-      description: "Bacaan panjang dan pendek",
-      total_letters: 18,
-      completed_letters: 0,
-      percentage: 0,
-      status: 'belum_mulai' as const,
-      total_pages: 18,
-      completed_pages: 0,
-      pages_status: Object.fromEntries(Array.from({length: 18}, (_, i) => [i + 1, 'belum_mulai' as const]))
-    },
-    {
-      jilid_id: 6,
-      jilid_name: "Jilid 6",
-      description: "Tajwid dan bacaan Al-Quran",
-      total_letters: 20,
-      completed_letters: 0,
-      percentage: 0,
-      status: 'belum_mulai' as const,
-      total_pages: 20,
-      completed_pages: 0,
-      pages_status: Object.fromEntries(Array.from({length: 20}, (_, i) => [i + 1, 'belum_mulai' as const]))
-    },
-    {
-      jilid_id: 7,
-      jilid_name: "Jilid 7",
-      description: "Mahir membaca Al-Quran",
-      total_letters: 17,
-      completed_letters: 0,
-      percentage: 0,
-      status: 'belum_mulai' as const,
-      total_pages: 17,
-      completed_pages: 0,
-      pages_status: Object.fromEntries(Array.from({length: 22}, (_, i) => [i + 1, 'belum_mulai' as const]))
-    }
-  ]
-}
-
 // Component untuk popup halaman
 function PagePopup({ 
   page, 
   status, 
-  jilidName, 
+  jilidName,
+  jilidId,
+  userId,
+  roomId,
   onStatusChange 
 }: { 
   page: number
   status: 'selesai' | 'belajar' | 'belum_mulai'
   jilidName: string
+  jilidId: number
+  userId: string
+  roomId: string
   onStatusChange: (newStatus: 'selesai' | 'belajar' | 'belum_mulai') => void 
 }) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
 
   const getStatusInfo = (status: string) => {
     switch (status) {
@@ -210,6 +103,29 @@ function PagePopup({
           borderColor: 'border-gray-200',
           icon: Circle
         }
+    }
+  }
+
+  const handleUpdateStatus = async (newStatus: 'selesai' | 'belajar' | 'belum_mulai') => {
+    try {
+      setIsUpdating(true)
+      
+      // Update via API
+      const halamanId = `${jilidId}-${page}`
+      const statusValue = newStatus === 'selesai' ? 1 : newStatus === 'belajar' ? 0 : -1
+      
+      await apiClient.post('/api/progress/halaman', {
+        halamanId,
+        status: statusValue
+      })
+
+      onStatusChange(newStatus)
+      setIsOpen(false)
+    } catch (error) {
+      console.error('Error updating page status:', error)
+      alert('Gagal mengupdate status halaman')
+    } finally {
+      setIsUpdating(false)
     }
   }
 
@@ -254,38 +170,29 @@ function PagePopup({
 
         <div className="grid grid-cols-1 gap-2 mt-4">
           <Button 
-            onClick={() => {
-              onStatusChange('selesai')
-              setIsOpen(false)
-            }}
+            onClick={() => handleUpdateStatus('selesai')}
             className="bg-green-500 hover:bg-green-600 text-white"
-            disabled={status === 'selesai'}
+            disabled={status === 'selesai' || isUpdating}
           >
             <CheckCircle className="h-4 w-4 mr-2" />
             {status === 'selesai' ? '✅ Sudah Lulus' : '✅ Tandai Lulus'}
           </Button>
           
           <Button 
-            onClick={() => {
-              onStatusChange('belajar')
-              setIsOpen(false)
-            }}
+            onClick={() => handleUpdateStatus('belajar')}
             variant="outline"
             className="border-yellow-300 text-yellow-600 hover:bg-yellow-50"
-            disabled={status === 'belajar'}
+            disabled={status === 'belajar' || isUpdating}
           >
             <PlayCircle className="h-4 w-4 mr-2" />
             {status === 'belajar' ? '📚 Sedang Belajar' : '📚 Tandai Belajar'}
           </Button>
 
           <Button 
-            onClick={() => {
-              onStatusChange('belum_mulai')
-              setIsOpen(false)
-            }}
+            onClick={() => handleUpdateStatus('belum_mulai')}
             variant="outline"
             className="border-gray-300 text-gray-600 hover:bg-gray-50"
-            disabled={status === 'belum_mulai'}
+            disabled={status === 'belum_mulai' || isUpdating}
           >
             <Circle className="h-4 w-4 mr-2" />
             {status === 'belum_mulai' ? '⚪ Sudah Reset' : '⚪ Reset/Belum Mulai'}
@@ -303,12 +210,140 @@ function PagePopup({
 }
 
 export default function StudentDetailPage({ params }: Props) {
-  const [jilidProgress, setJilidProgress] = useState(HARDCODED_STUDENT_DATA.jilidProgress)
-  
-  // Menggunakan hardcoded data
-  const student = HARDCODED_STUDENT_DATA.student
-  const room = HARDCODED_STUDENT_DATA.room
-  const enrollment = HARDCODED_STUDENT_DATA.enrollment
+  const { roomId, userId } = params
+  const router = useRouter()
+
+  const [student, setStudent] = useState<any>(null)
+  const [room, setRoom] = useState<any>(null)
+  const [enrollment, setEnrollment] = useState<any>(null)
+  const [jilidProgress, setJilidProgress] = useState<JilidProgress[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+
+        // Fetch room data
+        const roomRes = await apiClient.get(`/api/rooms/${roomId}`)
+        setRoom(roomRes.data.room)
+
+        // Fetch enrollment data to get student info
+        const enrollmentsRes = await apiClient.get(`/api/enrollments`, {
+          params: { roomId }
+        })
+        
+        const studentEnrollment = enrollmentsRes.data.enrollments.find(
+          (e: any) => e.user_id === userId
+        )
+        
+        if (!studentEnrollment) {
+          throw new Error('Student not found in this room')
+        }
+
+        setStudent({
+          user_id: studentEnrollment.user_id,
+          name: studentEnrollment.name,
+          email: studentEnrollment.email
+        })
+        
+        setEnrollment({
+          joined_at: studentEnrollment.joined_at
+        })
+
+        // Fetch all jilid data
+        const jilidRes = await apiClient.get('/api/jilid')
+        const allJilid = jilidRes.data.jilid || []
+
+        // Fetch progress data for this student
+        const [letterProgressRes, jilidProgressRes, halamanProgressRes] = await Promise.all([
+          apiClient.get('/api/progress/letter', {
+            params: { targetUserId: userId, roomId }
+          }),
+          apiClient.get('/api/progress/jilid', {
+            params: { targetUserId: userId, roomId }
+          }),
+          apiClient.get('/api/progress/halaman', {
+            params: { targetUserId: userId }
+          })
+        ])
+
+        const letterProgress = letterProgressRes.data.progress || []
+        const jilidProgressData = jilidProgressRes.data.progress || []
+        const halamanProgress = halamanProgressRes.data.progress || []
+
+        // Build jilid progress structure
+        const jilidProgressArray = allJilid.map((jilid: any) => {
+          // Get progress for this jilid
+          const jilidProg = jilidProgressData.find((jp: any) => jp.jilid_id === jilid.jilid_id)
+          
+          // Get letter progress for this jilid
+          const lettersInJilid = letterProgress.filter((lp: any) => lp.jilid_id === jilid.jilid_id)
+          const completedLetters = lettersInJilid.filter((lp: any) => lp.status === 'selesai').length
+          
+          // Get halaman progress for this jilid
+          const pagesInJilid = halamanProgress.filter((hp: any) => hp.jilid_id === jilid.jilid_id)
+          const completedPages = pagesInJilid.filter((hp: any) => hp.status === 1).length
+          
+          // Build pages status object
+          const pagesStatus: { [key: number]: 'selesai' | 'belajar' | 'belum_mulai' } = {}
+          
+          // Assuming each jilid has pages numbered from 1 to total_pages
+          const totalPages = jilid.total_pages || 15 // default 15 if not specified
+          
+          for (let i = 1; i <= totalPages; i++) {
+            const pageProgress = pagesInJilid.find((hp: any) => hp.nomor_halaman === i)
+            if (pageProgress) {
+              if (pageProgress.status === 1) {
+                pagesStatus[i] = 'selesai'
+              } else if (pageProgress.status === 0) {
+                pagesStatus[i] = 'belajar'
+              } else {
+                pagesStatus[i] = 'belum_mulai'
+              }
+            } else {
+              pagesStatus[i] = 'belum_mulai'
+            }
+          }
+
+          const percentage = totalPages > 0 ? Math.round((completedPages / totalPages) * 100) : 0
+          
+          let status: 'belum_mulai' | 'belajar' | 'selesai' = 'belum_mulai'
+          if (percentage === 100) {
+            status = 'selesai'
+          } else if (percentage > 0) {
+            status = 'belajar'
+          }
+
+          return {
+            jilid_id: jilid.jilid_id,
+            jilid_name: jilid.jilid_name,
+            description: jilid.description || '',
+            total_letters: jilid.total_letters || lettersInJilid.length,
+            completed_letters: completedLetters,
+            percentage,
+            status,
+            total_pages: totalPages,
+            completed_pages: completedPages,
+            pages_status: pagesStatus
+          }
+        })
+
+        setJilidProgress(jilidProgressArray)
+      } catch (err: any) {
+        console.error('Fetch student detail error:', err)
+        setError(err.response?.data?.error || err.message || 'Gagal memuat data murid')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    if (roomId && userId) {
+      fetchData()
+    }
+  }, [roomId, userId, router])
 
   // Function to handle status changes
   const handlePageStatusChange = (jilidId: number, page: number, newStatus: 'selesai' | 'belajar' | 'belum_mulai') => {
@@ -337,16 +372,46 @@ export default function StudentDetailPage({ params }: Props) {
     }))
   }
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#D5DBDB] via-[#D5DBDB] to-[#c8d0d0]">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#147E7E] border-t-transparent mb-4"></div>
+          <p className="text-lg text-[#2C3E50] font-medium">Memuat data murid...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !student || !room) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#D5DBDB] via-[#D5DBDB] to-[#c8d0d0]">
+        <div className="max-w-md w-full p-8 bg-white rounded-3xl shadow-2xl space-y-4 text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+            <span className="text-3xl">⚠️</span>
+          </div>
+          <h2 className="text-2xl font-bold text-[#2C3E50]">Terjadi Kesalahan</h2>
+          <p className="text-red-600 font-medium">{error || 'Data tidak ditemukan'}</p>
+          <Button 
+            onClick={() => router.back()} 
+            className="mt-4 bg-[#147E7E] hover:bg-[#2C3E50] text-white"
+          >
+            Kembali
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   // Calculate overall stats
   const totalPages = jilidProgress.reduce((sum, jp) => sum + jp.total_pages, 0)
   const totalCompletedPages = jilidProgress.reduce((sum, jp) => sum + jp.completed_pages, 0)
   const overallPercentage = totalPages > 0 ? Math.round((totalCompletedPages / totalPages) * 100) : 0
-
   const completedJilid = jilidProgress.filter(jp => jp.status === 'selesai').length
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#D5DBDB] via-[#D5DBDB] to-[#c8d0d0] relative overflow-hidden">
-      {/* Background Decorative Elements */}
+      {/* ...existing background elements... */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-20 w-96 h-96 bg-[#147E7E]/8 rounded-full blur-3xl"></div>
         <div className="absolute bottom-40 right-20 w-80 h-80 bg-[#F1C40F]/8 rounded-full blur-3xl"></div>
@@ -361,7 +426,7 @@ export default function StudentDetailPage({ params }: Props) {
           <div className="flex flex-col lg:flex-row justify-between items-center space-y-6 lg:space-y-0">
             {/* Navigation and Student Info */}
             <div className="flex items-center space-x-6">
-              <Link href={`/dashboard/guru/rooms/${room.room_id}/students`}>
+              <Link href={`/dashboard/guru/rooms/${roomId}/students`}>
                 <Button className="group relative overflow-hidden font-semibold px-6 py-3 rounded-xl border-2 border-white/40 text-white bg-white/10 hover:bg-white hover:text-[#147E7E] backdrop-blur-sm transition-all duration-300 hover:scale-105">
                   <ArrowLeft className="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform duration-300" />
                   <span>Kembali ke Murid</span>
@@ -374,8 +439,6 @@ export default function StudentDetailPage({ params }: Props) {
                 <div>
                   <div className="flex items-center space-x-3 mb-2">
                     <h1 className="text-3xl font-bold text-white tracking-tight">{student.name}</h1>
-                    <div className="px-3 py-1 rounded-full bg-[#F1C40F]/20 border border-[#F1C40F]/30">
-                    </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-4 text-sm mb-2">
                     <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-white/15">
@@ -401,7 +464,7 @@ export default function StudentDetailPage({ params }: Props) {
                 <div className="text-sm text-white/80 font-medium">Total Progress</div>
               </div>
               <div className="text-center p-4 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/20">
-                <div className="text-3xl font-black text-[#F1C40F]">{completedJilid}/7</div>
+                <div className="text-3xl font-black text-[#F1C40F]">{completedJilid}/{jilidProgress.length}</div>
                 <div className="text-sm text-white/80 font-medium">Jilid Selesai</div>
               </div>
             </div>
@@ -433,7 +496,7 @@ export default function StudentDetailPage({ params }: Props) {
                   <Star className="h-8 w-8 text-purple-600" />
                 </div>
                 <div>
-                  <div className="text-3xl font-black text-purple-900">{completedJilid}/7</div>
+                  <div className="text-3xl font-black text-purple-900">{completedJilid}/{jilidProgress.length}</div>
                   <div className="text-sm font-semibold text-purple-700 uppercase tracking-wide">Jilid Selesai</div>
                 </div>
               </div>
@@ -460,6 +523,7 @@ export default function StudentDetailPage({ params }: Props) {
             <div className="grid gap-6">
               {jilidProgress.map((jilid, index) => (
                 <Card key={jilid.jilid_id} className="group relative overflow-hidden border-2 border-[#D5DBDB]/30 bg-white hover:shadow-xl transition-all duration-500 rounded-2xl hover:-translate-y-1 hover:border-[#147E7E]/30">
+                  {/* ...existing jilid card content with PagePopup components... */}
                   <div className="absolute inset-0 bg-gradient-to-r from-[#147E7E]/3 via-transparent to-[#F1C40F]/3 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   <CardContent className="relative p-6">
                     <div className="flex items-center justify-between">
@@ -545,6 +609,9 @@ export default function StudentDetailPage({ params }: Props) {
                                   page={pageNumber}
                                   status={pageStatus}
                                   jilidName={jilid.jilid_name}
+                                  jilidId={jilid.jilid_id}
+                                  userId={userId}
+                                  roomId={roomId}
                                   onStatusChange={(newStatus) => 
                                     handlePageStatusChange(jilid.jilid_id, pageNumber, newStatus)
                                   }
