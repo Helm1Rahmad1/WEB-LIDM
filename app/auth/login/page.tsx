@@ -344,21 +344,6 @@ export default function LoginPage() {
             </CardContent>
           </Card>
         </motion.div>
-
-        {/* Additional Info Card */}
-        <motion.div variants={fadeInUp}>
-          <Card className="mt-6 border-0 bg-white/80 backdrop-blur-sm shadow-xl rounded-2xl">
-            <CardContent className="p-6 text-center">
-              <motion.div 
-                className="flex items-center justify-center space-x-2 text-gray-700"
-                whileHover={{ scale: 1.02 }}
-              >
-                <BookOpen className="h-5 w-5 text-teal-700" />
-                <span className="font-medium">Platform pembelajaran yang aman dan mudah digunakan</span>
-              </motion.div>
-            </CardContent>
-          </Card>
-        </motion.div>
       </motion.div>
     </div>
   )
