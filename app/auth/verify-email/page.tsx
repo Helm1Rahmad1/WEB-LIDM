@@ -1,258 +1,187 @@
-"use client"
+'use client'
 
+import { useSearchParams, useRouter } from 'next/navigation'
+import { useEffect, useState, Suspense } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, BookOpen, ArrowRight, Mail, RefreshCw, Sparkles } from "lucide-react"
-import Link from "next/link"
-import { motion } from "framer-motion"
+import { CheckCircle, XCircle, Loader2, Mail } from "lucide-react"
 
-export default function RegisterSuccessPage() {
-  // Animation variants
-  const fadeInUp = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
-  }
+function VerifyEmailContent() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
+  const [message, setMessage] = useState('')
+  const [resendEmail, setResendEmail] = useState('')
+  const [isResending, setIsResending] = useState(false)
 
-  const scaleIn = {
-    hidden: { opacity: 0, scale: 0.8 },
-    visible: { opacity: 1, scale: 1 }
+  useEffect(() => {
+    const verifyEmail = async () => {
+      const token = searchParams.get('token')
+      
+      if (!token) {
+        setStatus('error')
+        setMessage('Verification token is missing')
+        return
+      }
+
+      try {
+        // Use environment variable for API URL
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://signquran.site'}/api/auth/verify-email?token=${token}`, {
+          method: 'GET',
+        })
+
+        const data = await response.json()
+
+        if (response.ok) {
+          setStatus('success')
+          setMessage(data.message)
+          // Redirect to login after 3 seconds
+          setTimeout(() => {
+            router.push('/auth/login?verified=true')
+          }, 3000)
+        } else {
+          setStatus('error')
+          setMessage(data.error || 'Verification failed')
+        }
+      } catch (error) {
+        setStatus('error')
+        setMessage('Network error occurred')
+      }
+    }
+
+    verifyEmail()
+  }, [searchParams, router])
+
+  const handleResendVerification = async () => {
+    if (!resendEmail) return
+
+    setIsResending(true)
+    try {
+      // Use environment variable for API URL
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://signquran.site'}/api/auth/resend-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: resendEmail }),
+      })
+
+      const data = await response.json()
+      
+      if (response.ok) {
+        alert('Verification email sent! Please check your inbox.')
+        setResendEmail('')
+      } else {
+        alert(data.error || 'Failed to send verification email')
+      }
+    } catch (error) {
+      console.error('Backend call error:', error)
+      alert('Failed to connect to backend service')
+    } finally {
+      setIsResending(false)
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-teal-50/30 flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div 
-          className="absolute top-20 -left-20 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"
-          animate={{
-            y: [0, 30, 0],
-            scale: [1, 1.1, 1],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        <motion.div 
-          className="absolute bottom-40 -right-20 w-80 h-80 bg-yellow-500/10 rounded-full blur-3xl"
-          animate={{
-            y: [0, -30, 0],
-            scale: [1, 1.2, 1],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="flex items-center justify-center gap-2">
+            {status === 'loading' && <Loader2 className="w-6 h-6 animate-spin text-blue-500" />}
+            {status === 'success' && <CheckCircle className="w-6 h-6 text-green-500" />}
+            {status === 'error' && <XCircle className="w-6 h-6 text-red-500" />}
+            Email Verification
+          </CardTitle>
+          <CardDescription>
+            {status === 'loading' && 'Verifying your email...'}
+            {status === 'success' && 'Email verified successfully!'}
+            {status === 'error' && 'Verification failed'}
+          </CardDescription>
+        </CardHeader>
         
-        {/* Floating Sparkles */}
-        {[...Array(6)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-2 h-2 bg-teal-500/30 rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              y: [0, -30, 0],
-              opacity: [0.3, 1, 0.3],
-              scale: [1, 1.5, 1],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
-      </div>
+        <CardContent className="space-y-4">
+          <p className="text-center text-sm text-gray-600">
+            {message}
+          </p>
 
-      {/* Back to Home Link */}
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Link 
-          href="/" 
-          className="absolute top-6 left-6 flex items-center space-x-2 text-teal-700 hover:text-teal-800 transition-colors duration-300 font-medium group z-50"
-        >
-          <ArrowRight className="h-5 w-5 rotate-180 group-hover:-translate-x-1 transition-transform" />
-          <span>Kembali ke Beranda</span>
-        </Link>
-      </motion.div>
-
-      <motion.div 
-        className="relative w-full max-w-md z-10"
-        initial="hidden"
-        animate="visible"
-        variants={{
-          hidden: { opacity: 0 },
-          visible: {
-            opacity: 1,
-            transition: {
-              staggerChildren: 0.15
-            }
-          }
-        }}
-      >
-        {/* Success Card */}
-        <motion.div variants={fadeInUp}>
-          <Card className="border-0 shadow-2xl rounded-3xl overflow-hidden backdrop-blur-sm bg-white/95 hover:shadow-3xl transition-all duration-500">
-            {/* Header with Gradient */}
-            <CardHeader className="relative text-center pb-8 bg-gradient-to-br from-teal-600 to-teal-700 text-white overflow-hidden">
-              <div className="absolute inset-0 bg-teal-600/20 backdrop-blur-sm"></div>
-              
-              {/* Success Icon with Pulse Animation */}
-              <motion.div 
-                className="relative mx-auto mb-4 p-6 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 w-fit"
-                variants={scaleIn}
-                animate={{
-                  scale: [1, 1.05, 1],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
+          {status === 'success' && (
+            <div className="text-center">
+              <p className="text-sm text-green-600 mb-4">
+                You will be redirected to login page in a few seconds...
+              </p>
+              <Button 
+                onClick={() => router.push('/auth/login')}
+                className="w-full"
               >
-                <motion.div
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ 
-                    type: "spring", 
-                    stiffness: 200, 
-                    damping: 15,
-                    delay: 0.2 
-                  }}
-                >
-                  <CheckCircle className="h-16 w-16 text-yellow-400" />
-                </motion.div>
-              </motion.div>
+                Go to Login
+              </Button>
+            </div>
+          )}
 
-              <CardTitle className="relative text-3xl font-bold mb-2 tracking-tight">
-                Pendaftaran Berhasil!
-              </CardTitle>
-              <CardDescription className="relative text-white/90 text-base font-medium leading-relaxed">
-                Selamat bergabung dengan<br />Sign Quran
-              </CardDescription>
-
-              {/* Confetti-like elements */}
-              <motion.div
-                className="absolute top-4 right-4 w-3 h-3 bg-yellow-400 rounded-full"
-                animate={{
-                  y: [0, -20, 0],
-                  opacity: [1, 0, 1],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              />
-              <motion.div
-                className="absolute bottom-4 left-4 w-3 h-3 bg-yellow-400 rounded-full"
-                animate={{
-                  y: [0, 20, 0],
-                  opacity: [1, 0, 1],
-                }}
-                transition={{
-                  duration: 2.5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 0.5
-                }}
-              />
-            </CardHeader>
-
-            {/* Content */}
-            <CardContent className="p-8 space-y-6">
-              {/* Success Messages */}
-              <motion.div 
-                variants={fadeInUp}
-                className="text-center space-y-4"
-              >
-                <motion.div 
-                  className="p-4 bg-gradient-to-r from-green-50 to-teal-50 border border-green-200 rounded-xl"
-                  whileHover={{ scale: 1.02 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="flex items-center justify-center space-x-2 text-green-700 mb-2">
-                    <Mail className="h-5 w-5" />
-                    <span className="font-semibold">Email Konfirmasi Dikirim</span>
-                  </div>
-                  <p className="text-sm text-green-600">
-                    Kami telah mengirimkan email konfirmasi ke alamat email Anda. 
-                    Silakan cek email dan klik link konfirmasi untuk mengaktifkan akun.
-                  </p>
-                </motion.div>
-
-                <motion.div 
-                  className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl"
-                  whileHover={{ scale: 1.02 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="flex items-center justify-center space-x-2 text-blue-700 mb-2">
-                    <RefreshCw className="h-5 w-5" />
-                    <span className="font-semibold">Tidak Menerima Email?</span>
-                  </div>
-                  <p className="text-sm text-blue-600">
-                    Cek folder spam atau junk mail Anda. Email konfirmasi mungkin 
-                    memerlukan waktu beberapa menit untuk sampai.
-                  </p>
-                </motion.div>
-              </motion.div>
-
-              {/* Action Buttons */}
-              <motion.div 
-                variants={fadeInUp}
-                className="space-y-4 pt-4"
-              >
-                {/* Go to Login Button */}
-                <Link href="/auth/login">
-                  <Button className="group relative overflow-hidden w-full h-12 text-white font-bold bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 transition-all duration-300 hover:scale-105 hover:shadow-xl rounded-xl shadow-lg text-lg">
-                    <span className="relative z-10 flex items-center justify-center space-x-2">
-                      <span>Lanjutkan ke Login</span>
-                      <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
-                    </span>
-                  </Button>
-                </Link>
-
-                {/* Back to Home Button */}
-                <Link href="/">
+          {status === 'error' && (
+            <div className="space-y-4">
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  Resend Verification Email
+                </h3>
+                <div className="space-y-2">
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={resendEmail}
+                    onChange={(e) => setResendEmail(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                   <Button
-                    variant="outline"
-                    className="group w-full font-semibold border-2 border-teal-600 text-teal-700 hover:bg-teal-600 hover:text-white transition-all duration-300 hover:scale-105 rounded-xl px-6 py-3 h-12"
+                    onClick={handleResendVerification}
+                    disabled={!resendEmail || isResending}
+                    className="w-full"
                   >
-                    <span className="flex items-center justify-center space-x-2">
-                      <span>Kembali ke Beranda</span>
-                      <BookOpen className="h-4 w-4 group-hover:rotate-12 transition-transform duration-300" />
-                    </span>
+                    {isResending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        Sending...
+                      </>
+                    ) : (
+                      'Resend Verification Email'
+                    )}
                   </Button>
-                </Link>
-              </motion.div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Additional Info Card */}
-        <motion.div variants={fadeInUp}>
-          <Card className="mt-6 border-0 bg-white/80 backdrop-blur-sm shadow-xl rounded-2xl">
-            <CardContent className="p-6 text-center">
-              <motion.div 
-                className="flex items-center justify-center space-x-2 text-gray-700"
-                whileHover={{ scale: 1.02 }}
-              >
-                <Sparkles className="h-5 w-5 text-yellow-500" />
-                <span className="font-medium">Akun Anda sedang dalam proses aktivasi</span>
-              </motion.div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </motion.div>
+                </div>
+              </div>
+              
+              <div className="text-center">
+                <Button 
+                  variant="outline"
+                  onClick={() => router.push('/auth/login')}
+                  className="w-full"
+                >
+                  Back to Login
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
+  )
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="flex items-center justify-center gap-2">
+              <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+              Loading...
+            </CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+    }>
+      <VerifyEmailContent />
+    </Suspense>
   )
 }
