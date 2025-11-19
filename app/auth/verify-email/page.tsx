@@ -210,7 +210,6 @@ function VerifyEmailContent() {
               {status === 'success' && (
                 <motion.div variants={fadeInUp} className="space-y-4">
                   <div className="p-4 bg-green-50 border border-green-200 rounded-xl text-center">
-                    <Sparkles className="h-6 w-6 text-green-600 mx-auto mb-2" />
                     <p className="text-sm text-green-600 mb-4">
                       Anda akan diarahkan ke halaman login dalam beberapa detik...
                     </p>
