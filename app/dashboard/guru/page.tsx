@@ -180,7 +180,7 @@ export default function GuruDashboardPage() {
 
   if (loading || loadingRooms) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-orange-50/30 to-purple-50/20 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-teal-50/30 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-teal-600 border-t-transparent mb-4"></div>
           <p className="text-lg text-gray-700 font-medium">Memuat dashboard...</p>
@@ -194,27 +194,23 @@ export default function GuruDashboardPage() {
   const totalStudents = rooms.reduce((sum, r) => sum + (r.student_count || 0), 0)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-50 via-orange-50/30 to-purple-50/20 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-teal-50/30 relative overflow-hidden">
       <MouseFollower />
 
       {/* Animated Background with Parallax */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div 
-          className="absolute top-20 -left-20 w-96 h-96 bg-gradient-to-br from-teal-400/20 to-cyan-400/20 rounded-full blur-3xl transition-transform duration-500 ease-out"
+          className="absolute top-20 -left-20 w-96 h-96 bg-teal-500/5 rounded-full blur-3xl transition-transform duration-500 ease-out"
           style={{ transform: `translate(${mousePosition.x}px, ${mousePosition.y}px)` }}
         />
         <div 
-          className="absolute bottom-40 -right-20 w-80 h-80 bg-gradient-to-br from-yellow-400/20 to-orange-400/20 rounded-full blur-3xl transition-transform duration-700 ease-out"
+          className="absolute bottom-40 -right-20 w-80 h-80 bg-yellow-500/5 rounded-full blur-3xl transition-transform duration-700 ease-out"
           style={{ transform: `translate(${-mousePosition.x}px, ${-mousePosition.y}px)` }}
-        />
-        <div 
-          className="absolute top-1/2 left-1/3 w-64 h-64 bg-gradient-to-br from-purple-400/15 to-pink-400/15 rounded-full blur-3xl transition-transform duration-1000 ease-out"
-          style={{ transform: `translate(${mousePosition.x * 0.5}px, ${mousePosition.y * 0.5}px)` }}
         />
       </div>
 
-      {/* Header - Colorful */}
-      <header className="relative z-20 backdrop-blur-lg bg-gradient-to-r from-teal-600 to-cyan-600 shadow-2xl border-b border-white/10">
+      {/* Header - Match Landing Page */}
+      <header className="relative z-20 backdrop-blur-lg bg-gradient-to-r from-teal-600 to-teal-700 shadow-2xl border-b border-white/10">
         <div className="absolute inset-0 bg-teal-600/20 backdrop-blur-sm"></div>
         <div className="relative max-w-7xl mx-auto px-6 py-6">
           <div className="flex flex-col lg:flex-row justify-between items-center space-y-4 lg:space-y-0">
@@ -225,17 +221,16 @@ export default function GuruDashboardPage() {
               <div>
                 <div className="flex items-center space-x-2 mb-1">
                   <h1 className="text-2xl font-bold text-white tracking-tight">Dashboard Guru</h1>
-                  <Sparkles className="h-5 w-5 text-yellow-400 animate-pulse" />
                 </div>
                 <p className="text-sm text-white/90 font-medium">
-                  Selamat datang, <span className="text-yellow-400 font-bold">{user?.name || user?.email || 'Guru'}</span>
+                  Selamat datang, <span className="text-white font-bold">{user?.name || user?.email || 'Guru'}</span>
                 </p>
               </div>
             </div>
 
             <div className="flex items-center space-x-3">
               <Link href="/dashboard/guru/rooms/create">
-                <MagneticButton className="group relative overflow-hidden font-bold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-500 hover:from-yellow-500 hover:to-orange-500 text-gray-900 shadow-lg hover:shadow-xl border-0">
+                <MagneticButton className="group relative overflow-hidden font-bold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white shadow-lg hover:shadow-xl border-0">
                   <Plus className="h-5 w-5 mr-2 inline-block group-hover:rotate-180 transition-transform duration-500" />
                   <span>Buat Kelas</span>
                 </MagneticButton>
@@ -257,53 +252,53 @@ export default function GuruDashboardPage() {
       <div className="relative z-10 max-w-7xl mx-auto p-6 space-y-8">
         {/* Colorful Stats Cards */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Total Kelas - Teal */}
+          {/* Total Kelas - Subtle Teal */}
           <InteractiveCard className="group relative overflow-hidden border-0 bg-white shadow-xl hover:shadow-2xl transition-all duration-500 rounded-2xl">
-            <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 via-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute inset-0 bg-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-3 p-6">
               <div className="space-y-1">
                 <CardTitle className="text-xs font-bold text-gray-600 uppercase tracking-wide">Total Kelas</CardTitle>
-                <div className="text-3xl font-black bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
+                <div className="text-3xl font-black text-gray-900">
                   {rooms?.length || 0}
                 </div>
                 <p className="text-xs text-gray-500 font-medium">Kelas aktif</p>
               </div>
-              <div className="p-3 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 group-hover:scale-110 transition-all duration-300 shadow-lg">
-                <BookOpen className="h-6 w-6 text-white" />
+              <div className="p-3 rounded-xl bg-teal-50 border border-teal-100 group-hover:scale-110 transition-all duration-300">
+                <BookOpen className="h-6 w-6 text-teal-700" />
               </div>
             </CardHeader>
           </InteractiveCard>
 
-          {/* Total Murid - Yellow/Orange */}
+          {/* Total Murid - Subtle */}
           <InteractiveCard className="group relative overflow-hidden border-0 bg-white shadow-xl hover:shadow-2xl transition-all duration-500 rounded-2xl">
-            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 via-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute inset-0 bg-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-3 p-6">
               <div className="space-y-1">
                 <CardTitle className="text-xs font-bold text-gray-600 uppercase tracking-wide">Total Murid</CardTitle>
-                <div className="text-3xl font-black bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+                <div className="text-3xl font-black text-gray-900">
                   {totalStudents || 0}
                 </div>
                 <p className="text-xs text-gray-500 font-medium">Murid terdaftar</p>
               </div>
-              <div className="p-3 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 group-hover:scale-110 transition-all duration-300 shadow-lg">
-                <Users className="h-6 w-6 text-white" />
+              <div className="p-3 rounded-xl bg-yellow-50 border border-yellow-100 group-hover:scale-110 transition-all duration-300">
+                <Users className="h-6 w-6 text-yellow-600" />
               </div>
             </CardHeader>
           </InteractiveCard>
 
-          {/* Tes Selesai - Purple/Pink */}
+          {/* Tes Selesai - Subtle */}
           <InteractiveCard className="group relative overflow-hidden border-0 bg-white shadow-xl hover:shadow-2xl transition-all duration-500 rounded-2xl">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute inset-0 bg-gray-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-3 p-6">
               <div className="space-y-1">
                 <CardTitle className="text-xs font-bold text-gray-600 uppercase tracking-wide">Tes Selesai</CardTitle>
-                <div className="text-3xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                <div className="text-3xl font-black text-gray-900">
                   0
                 </div>
                 <p className="text-xs text-gray-500 font-medium">Evaluasi lengkap</p>
               </div>
-              <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 group-hover:scale-110 transition-all duration-300 shadow-lg">
-                <Award className="h-6 w-6 text-white" />
+              <div className="p-3 rounded-xl bg-gray-100 border border-gray-200 group-hover:scale-110 transition-all duration-300">
+                <Award className="h-6 w-6 text-gray-700" />
               </div>
             </CardHeader>
           </InteractiveCard>
@@ -313,7 +308,7 @@ export default function GuruDashboardPage() {
         <div className="grid lg:grid-cols-4 gap-6">
           <div className="lg:col-span-3">
             <Card className="border-0 bg-white shadow-xl rounded-2xl overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-teal-50 via-orange-50/30 to-purple-50/20 p-6 border-b border-gray-100">
+              <CardHeader className="bg-gradient-to-r from-teal-50 to-white p-6 border-b border-gray-100">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
@@ -325,7 +320,7 @@ export default function GuruDashboardPage() {
                     </CardDescription>
                   </div>
                   <Link href="/dashboard/guru/rooms/create">
-                    <MagneticButton className="group font-bold px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white transition-all duration-300 hover:scale-105 shadow-lg border-0">
+                    <MagneticButton className="group font-bold px-5 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white transition-all duration-300 hover:scale-105 shadow-lg border-0">
                       <Plus className="h-4 w-4 mr-2 inline-block group-hover:rotate-180 transition-transform duration-500" />
                       <span>Tambah Kelas</span>
                     </MagneticButton>
@@ -337,13 +332,13 @@ export default function GuruDashboardPage() {
                   <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-6">
                     {rooms.map((room) => (
                       <InteractiveCard key={room.room_id} className="group relative overflow-hidden border border-gray-200 bg-white hover:shadow-xl transition-all duration-500 rounded-xl">
-                        <div className="absolute inset-0 bg-gradient-to-br from-teal-500/5 via-orange-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        <div className="absolute inset-0 bg-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                         <CardHeader className="relative pb-4 p-5">
                           <div className="flex items-start justify-between mb-3">
                             <CardTitle className="text-xl font-bold text-gray-900 group-hover:text-teal-700 transition-colors duration-300">
                               {room.name}
                             </CardTitle>
-                            <div className="p-2 rounded-lg bg-gradient-to-br from-teal-100 to-cyan-100 group-hover:from-teal-200 group-hover:to-cyan-200 transition-colors duration-300">
+                            <div className="p-2 rounded-lg bg-teal-50 border border-teal-100 group-hover:bg-teal-100 transition-colors duration-300">
                               <BookOpen className="h-4 w-4 text-teal-700" />
                             </div>
                           </div>
@@ -352,7 +347,7 @@ export default function GuruDashboardPage() {
                           </CardDescription>
                         </CardHeader>
                         <CardContent className="relative pt-0 p-5 space-y-4">
-                          <div className="flex justify-between items-center p-3 bg-gradient-to-r from-gray-50 to-teal-50/30 rounded-xl">
+                          <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100">
                             <div className="flex items-center space-x-2">
                               <Target className="h-3 w-3 text-teal-700" />
                               <div>
@@ -360,20 +355,20 @@ export default function GuruDashboardPage() {
                                 <div className="font-mono text-sm font-bold text-teal-700">{room.code}</div>
                               </div>
                             </div>
-                            <div className="flex items-center space-x-1.5 bg-gradient-to-r from-yellow-50 to-orange-50 px-3 py-1.5 rounded-lg border border-orange-100">
-                              <Users className="h-4 w-4 text-orange-600" />
+                            <div className="flex items-center space-x-1.5 bg-yellow-50 px-3 py-1.5 rounded-lg border border-yellow-100">
+                              <Users className="h-4 w-4 text-yellow-600" />
                               <span className="font-bold text-sm">{room.student_count || 0}</span>
                             </div>
                           </div>
                           <div className="grid grid-cols-2 gap-3">
                             <Link href={`/dashboard/guru/rooms/${room.room_id}`}>
-                              <MagneticButton className="w-full font-semibold py-2 text-white bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 rounded-lg shadow-md text-sm border-0">
+                              <MagneticButton className="w-full font-semibold py-2 text-white bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 rounded-lg shadow-md text-sm border-0">
                                 Detail
                                 <ArrowRight className="h-4 w-4 ml-1 inline-block" />
                               </MagneticButton>
                             </Link>
                             <Link href={`/dashboard/guru/rooms/${room.room_id}/students`}>
-                              <MagneticButton className="w-full font-semibold py-2 border-2 border-teal-600 text-teal-700 hover:bg-gradient-to-r hover:from-teal-600 hover:to-cyan-600 hover:text-white hover:border-transparent rounded-lg text-sm bg-white">
+                              <MagneticButton className="w-full font-semibold py-2 border-2 border-teal-600 text-teal-700 hover:bg-teal-600 hover:text-white hover:border-teal-600 rounded-lg text-sm bg-white">
                                 <Users className="h-4 w-4 mr-1 inline-block" />
                                 Murid
                               </MagneticButton>
@@ -391,7 +386,7 @@ export default function GuruDashboardPage() {
                       Mulai perjalanan mengajar dengan membuat kelas pertama
                     </p>
                     <Link href="/dashboard/guru/rooms/create">
-                      <MagneticButton className="font-bold px-8 py-3 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white shadow-lg border-0">
+                      <MagneticButton className="font-bold px-8 py-3 rounded-xl bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white shadow-lg border-0">
                         <Plus className="h-5 w-5 mr-2 inline-block" />
                         Buat Kelas Pertama
                       </MagneticButton>
@@ -405,22 +400,22 @@ export default function GuruDashboardPage() {
           {/* Sidebar - Colorful */}
           <div className="space-y-6">
             <Card className="border-0 bg-white shadow-xl rounded-2xl overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-gray-50 to-teal-50/30 p-5">
+              <CardHeader className="bg-gradient-to-r from-gray-50 to-white p-5">
                 <CardTitle className="text-xl font-bold text-gray-900 flex items-center space-x-2">
                   <BarChart3 className="h-5 w-5 text-gray-700" />
                   <span>Ringkasan</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-5 space-y-4">
-                <InteractiveCard className="text-center p-4 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl border border-teal-100">
+                <InteractiveCard className="text-center p-4 bg-teal-50 rounded-xl border border-teal-100">
                   <div className="text-3xl font-black text-teal-700 mb-1">{rooms?.length || 0}</div>
                   <div className="text-xs text-gray-600 font-semibold uppercase">Kelas Aktif</div>
                 </InteractiveCard>
-                <InteractiveCard className="text-center p-4 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl border border-orange-100">
-                  <div className="text-3xl font-black text-orange-600 mb-1">{totalStudents || 0}</div>
+                <InteractiveCard className="text-center p-4 bg-yellow-50 rounded-xl border border-yellow-100">
+                  <div className="text-3xl font-black text-yellow-600 mb-1">{totalStudents || 0}</div>
                   <div className="text-xs text-gray-600 font-semibold uppercase">Total Murid</div>
                 </InteractiveCard>
-                <InteractiveCard className="text-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-100">
+                <InteractiveCard className="text-center p-4 bg-green-50 rounded-xl border border-green-100">
                   <div className="text-3xl font-black text-green-600 mb-1">100%</div>
                   <div className="text-xs text-gray-600 font-semibold uppercase">Kepuasan</div>
                 </InteractiveCard>
