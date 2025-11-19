@@ -70,8 +70,23 @@ export default function RoomDetailPage({ params }: Props) {
 
         const studentsResponse = await apiClient.get(`/api/rooms/${roomId}/students`)
         console.log('✅ Students data:', studentsResponse.data)
-        console.log('✅ First student:', studentsResponse.data.students?.[0])
-        setStudents(studentsResponse.data.students || [])
+        
+        // Normalize student data structure
+        const raw = studentsResponse.data.students || []
+        const normalized = raw.map((row: any) => ({
+          enrollment_id: row.enrollment_id,
+          user_id: row.user_id,
+          joined_at: row.joined_at,
+          users: {
+            name: row.name || row.users?.name,
+            email: row.email || row.users?.email,
+          },
+          totalPages: row.total_pages || row.totalPages,
+          totalCompletedPages: row.completed_pages || row.totalCompletedPages,
+        }))
+        
+        console.log('✅ Normalized students:', normalized)
+        setStudents(normalized)
         
       } catch (error) {
         console.error('❌ Error fetching data:', error)
