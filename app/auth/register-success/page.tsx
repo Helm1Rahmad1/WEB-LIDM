@@ -114,7 +114,6 @@ export default function RegisterSuccessPage() {
         <Card className="mt-6 border-0 bg-white/80 backdrop-blur-sm shadow-xl rounded-2xl animate-slide-up" style={{ animationDelay: '0.2s' }}>
           <CardContent className="p-6 text-center">
             <div className="flex items-center justify-center space-x-2 text-gray-700 hover:scale-105 transition-transform">
-              <Sparkles className="h-5 w-5 text-yellow-500" />
               <span className="font-medium">Akun Anda sedang dalam proses aktivasi</span>
             </div>
           </CardContent>
