@@ -48,6 +48,7 @@ interface StudentEnrollment {
   totalPages?: number
   totalCompletedPages?: number
   completedJilid?: number
+  totalJilid?: number
   progressPercentage?: number
 }
 
@@ -59,9 +60,6 @@ export default function RoomStudentsPage({ params }: Props) {
   const [students, setStudents] = useState<StudentEnrollment[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  const allJilid = Array.from({ length: 7 }, (_, i) => ({ jilid_id: i + 1, name: `Jilid ${i + 1}` }))
-  const allPages = Array.from({ length: 100 })
 
   // Animation variants
   const fadeInUp = {
@@ -106,31 +104,86 @@ export default function RoomStudentsPage({ params }: Props) {
         ])
 
         setRoom(roomRes.data.room)
+        const rawEnrollments = enrollRes.data.enrollments || []
 
-        const raw = enrollRes.data.enrollments || []
-        const normalized: StudentEnrollment[] = raw.map((row: any) => ({
-          enrollment_id: row.enrollment_id,
-          user_id: row.user_id,
-          joined_at: row.joined_at,
-          users: {
-            name: row.name,
-            email: row.email,
-          },
-          totalPages: row.total_pages ?? allPages.length,
-          totalCompletedPages: row.completed_pages ?? 0,
-          completedJilid: row.completed_jilid ?? 0,
-          progressPercentage: row.progress_percentage ?? 0,
-        }))
+        // Fetch progress data for each student
+        const studentsWithProgress = await Promise.all(
+          rawEnrollments.map(async (row: any) => {
+            try {
+              // Fetch jilid progress for this student
+              const jilidProgressRes = await apiClient.get(`/api/progress/jilid`, {
+                params: { 
+                  userId: row.user_id,
+                  roomId: roomId 
+                }
+              })
+              
+              const jilidProgress = jilidProgressRes.data.progress || []
+              
+              // Calculate completed jilid (where completed = true)
+              const completedJilid = jilidProgress.filter((j: any) => j.completed).length
+              const totalJilid = jilidProgress.length
+              
+              // Fetch letter/halaman progress for this student
+              const letterProgressRes = await apiClient.get(`/api/progress/letter`, {
+                params: { 
+                  userId: row.user_id,
+                  roomId: roomId 
+                }
+              })
+              
+              const letterProgress = letterProgressRes.data.progress || []
+              const totalCompletedPages = letterProgress.filter((l: any) => l.completed).length
+              const totalPages = letterProgress.length
+              
+              // Calculate overall progress percentage
+              const progressPercentage = totalJilid > 0 
+                ? Math.round((completedJilid / totalJilid) * 100) 
+                : 0
 
-        setStudents(normalized)
+              return {
+                enrollment_id: row.enrollment_id,
+                user_id: row.user_id,
+                joined_at: row.joined_at,
+                users: {
+                  name: row.name,
+                  email: row.email,
+                },
+                totalPages,
+                totalCompletedPages,
+                completedJilid,
+                totalJilid,
+                progressPercentage,
+              }
+            } catch (progressError) {
+              console.error(`Error fetching progress for user ${row.user_id}:`, progressError)
+              
+              // Return default values if progress fetch fails
+              return {
+                enrollment_id: row.enrollment_id,
+                user_id: row.user_id,
+                joined_at: row.joined_at,
+                users: {
+                  name: row.name,
+                  email: row.email,
+                },
+                totalPages: 0,
+                totalCompletedPages: 0,
+                completedJilid: 0,
+                totalJilid: 7, // default 7 jilid
+                progressPercentage: 0,
+              }
+            }
+          })
+        )
+
+        setStudents(studentsWithProgress)
       } catch (err: any) {
         console.error("Fetch room/students error:", err)
-
         if (err.response?.status === 401) {
           router.push("/auth/login")
           return
         }
-
         setError(err.response?.data?.error || "Gagal memuat data murid")
       } finally {
         setIsLoading(false)
@@ -332,15 +385,10 @@ export default function RoomStudentsPage({ params }: Props) {
                   >
                     {students.map((enrollment, index) => {
                       const completedJilid = enrollment.completedJilid || 0
-                      const totalJilid = allJilid.length
-                      const totalPages = enrollment.totalPages ?? allPages.length
-                      const totalCompletedPages = enrollment.totalCompletedPages ?? 0
-                      const progressPercentage =
-                        typeof enrollment.progressPercentage === "number"
-                          ? enrollment.progressPercentage
-                          : totalJilid > 0
-                          ? Math.round((completedJilid / totalJilid) * 100)
-                          : 0
+                      const totalJilid = enrollment.totalJilid || 7
+                      const totalPages = enrollment.totalPages || 0
+                      const totalCompletedPages = enrollment.totalCompletedPages || 0
+                      const progressPercentage = enrollment.progressPercentage || 0
 
                       return (
                         <motion.div
@@ -378,57 +426,6 @@ export default function RoomStudentsPage({ params }: Props) {
                                       <h3 className="text-2xl font-bold text-gray-900 group-hover:text-teal-600 transition-colors duration-300 mb-2">
                                         {enrollment.users?.name || "Nama tidak tersedia"}
                                       </h3>
-                                      <div className="flex flex-wrap items-center gap-3 text-sm">
-                                        <motion.div 
-                                          className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-teal-50 border border-teal-200"
-                                          whileHover={{ scale: 1.05 }}
-                                        >
-                                          <Mail className="h-4 w-4 text-teal-600" />
-                                          <span className="text-gray-700 font-medium">
-                                            {enrollment.users?.email || "Email tidak tersedia"}
-                                          </span>
-                                        </motion.div>
-                                        <motion.div 
-                                          className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-yellow-50 border border-yellow-200"
-                                          whileHover={{ scale: 1.05 }}
-                                        >
-                                          <Calendar className="h-4 w-4 text-yellow-600" />
-                                          <span className="text-gray-700 font-medium">
-                                            Bergabung {new Date(enrollment.joined_at).toLocaleDateString("id-ID")}
-                                          </span>
-                                        </motion.div>
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  {/* Stats */}
-                                  <div className="grid sm:grid-cols-1 lg:grid-cols-3 gap-6">
-                                    {/* Total Halaman */}
-                                    <motion.div 
-                                      className="group/stat relative overflow-hidden p-6 bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl border-2 border-blue-200/50 hover:shadow-xl transition-all duration-300"
-                                      whileHover={{ y: -5, scale: 1.02 }}
-                                    >
-                                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300"></div>
-                                      <div className="relative">
-                                        <div className="flex items-center justify-between mb-4">
-                                          <div className="flex items-center space-x-3">
-                                            <motion.div 
-                                              className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20"
-                                              whileHover={{ rotate: 360 }}
-                                              transition={{ duration: 0.6 }}
-                                            >
-                                              <FileText className="h-5 w-5 text-blue-600" />
-                                            </motion.div>
-                                            <span className="text-sm font-bold text-blue-900 uppercase tracking-wide">
-                                              Total Halaman
-                                            </span>
-                                          </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                          <div className="text-3xl font-black text-blue-900">
-                                            {totalCompletedPages}/{totalPages}
-                                          </div>
-                                          <div className="flex items-center space-x-2">
                                             <BookOpen className="h-4 w-4 text-blue-600" />
                                             <span className="text-sm font-medium text-blue-700">halaman pembelajaran</span>
                                           </div>
@@ -468,7 +465,7 @@ export default function RoomStudentsPage({ params }: Props) {
                                         </div>
                                         <div className="space-y-2">
                                           <div className="text-3xl font-black text-green-900">
-                                            {completedJilid}/{allJilid.length}
+                                            {completedJilid}/{totalJilid}
                                           </div>
                                           <div className="flex items-center space-x-2">
                                             <Award className="h-4 w-4 text-green-600" />
@@ -479,7 +476,7 @@ export default function RoomStudentsPage({ params }: Props) {
                                             <motion.div
                                               className="h-full bg-gradient-to-r from-green-500 to-green-600 rounded-full"
                                               initial={{ width: 0 }}
-                                              animate={{ width: `${(completedJilid / totalJilid) * 100}%` }}
+                                              animate={{ width: `${totalJilid > 0 ? (completedJilid / totalJilid) * 100 : 0}%` }}
                                               transition={{ duration: 1, ease: "easeOut", delay: index * 0.1 + 0.1 }}
                                             />
                                           </div>
