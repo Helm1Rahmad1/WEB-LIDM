@@ -40,139 +40,26 @@ interface JilidProgress {
   pages_status: { [key: number]: 'selesai' | 'belajar' | 'belum_mulai' }
 }
 
-interface PageStatus {
-  page: number
-  status: 'selesai' | 'belajar' | 'belum_mulai'
-  score?: number
-}
-
-// Hardcoded data untuk testing
-const HARDCODED_STUDENT_DATA = {
-  student: {
-    user_id: "123",
-    name: "Helmi",
-    email: "helmirahmadi@gmail.com"
-  },
-  room: {
-    room_id: 1,
-    name: "Kelas Hijaiyah A",
-    description: "Kelas belajar huruf hijaiyah untuk pemula"
-  },
-  enrollment: {
-    joined_at: "2025-08-01T10:30:00Z"
-  },
-  jilidProgress: [
-    {
-      jilid_id: 1,
-      jilid_name: "Jilid 1",
-      description: "Pengenalan huruf hijaiyah dasar",
-      total_letters: 10,
-      completed_letters: 8,
-      percentage: 80,
-      status: 'belajar' as const,
-      total_pages: 10,
-      completed_pages: 7,
-      pages_status: {
-        1: 'selesai' as const,
-        2: 'selesai' as const,
-        3: 'selesai' as const,
-        4: 'selesai' as const,
-        5: 'selesai' as const,
-        6: 'belajar' as const,
-        7: 'belajar' as const,
-        8: 'belum_mulai' as const,
-        9: 'belum_mulai' as const,
-        10: 'belum_mulai' as const,
-      }
-    },
-    {
-      jilid_id: 2,
-      jilid_name: "Jilid 2",
-      description: "Lanjutan huruf hijaiyah dengan harakat",
-      total_letters: 8,
-      completed_letters: 0,
-      percentage: 0,
-      status: 'belum_mulai' as const,
-      total_pages: 8,
-      completed_pages: 0,
-      pages_status: Object.fromEntries(Array.from({length: 15}, (_, i) => [i + 1, 'belum_mulai' as const]))
-    },
-    {
-      jilid_id: 3,
-      jilid_name: "Jilid 3",
-      description: "Huruf hijaiyah sambung dan tajwid dasar",
-      total_letters: 12,
-      completed_letters: 0,
-      percentage: 0,
-      status: 'belum_mulai' as const,
-      total_pages: 12,
-      completed_pages: 0,
-      pages_status: Object.fromEntries(Array.from({length: 15}, (_, i) => [i + 1, 'belum_mulai' as const]))
-    },
-    {
-      jilid_id: 4,
-      jilid_name: "Jilid 4",
-      description: "Membaca kata dan kalimat sederhana",
-      total_letters: 15,
-      completed_letters: 0,
-      percentage: 0,
-      status: 'belum_mulai' as const,
-      total_pages: 15,
-      completed_pages: 0,
-      pages_status: Object.fromEntries(Array.from({length: 15}, (_, i) => [i + 1, 'belum_mulai' as const]))
-    },
-    {
-      jilid_id: 5,
-      jilid_name: "Jilid 5",
-      description: "Bacaan panjang dan pendek",
-      total_letters: 18,
-      completed_letters: 0,
-      percentage: 0,
-      status: 'belum_mulai' as const,
-      total_pages: 18,
-      completed_pages: 0,
-      pages_status: Object.fromEntries(Array.from({length: 18}, (_, i) => [i + 1, 'belum_mulai' as const]))
-    },
-    {
-      jilid_id: 6,
-      jilid_name: "Jilid 6",
-      description: "Tajwid dan bacaan Al-Quran",
-      total_letters: 20,
-      completed_letters: 0,
-      percentage: 0,
-      status: 'belum_mulai' as const,
-      total_pages: 20,
-      completed_pages: 0,
-      pages_status: Object.fromEntries(Array.from({length: 20}, (_, i) => [i + 1, 'belum_mulai' as const]))
-    },
-    {
-      jilid_id: 7,
-      jilid_name: "Jilid 7",
-      description: "Mahir membaca Al-Quran",
-      total_letters: 17,
-      completed_letters: 0,
-      percentage: 0,
-      status: 'belum_mulai' as const,
-      total_pages: 17,
-      completed_pages: 0,
-      pages_status: Object.fromEntries(Array.from({length: 22}, (_, i) => [i + 1, 'belum_mulai' as const]))
-    }
-  ]
-}
-
 // Component untuk popup halaman
 function PagePopup({ 
   page, 
   status, 
-  jilidName, 
+  jilidName,
+  jilidId,
+  userId,
+  roomId,
   onStatusChange 
 }: { 
   page: number
   status: 'selesai' | 'belajar' | 'belum_mulai'
   jilidName: string
+  jilidId: number
+  userId: string
+  roomId: string
   onStatusChange: (newStatus: 'selesai' | 'belajar' | 'belum_mulai') => void 
 }) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isUpdating, setIsUpdating] = useState(false)
 
   const getStatusInfo = (status: string) => {
     switch (status) {
@@ -203,6 +90,31 @@ function PagePopup({
           borderColor: 'border-gray-200',
           icon: Circle
         }
+    }
+  }
+
+  const handleUpdateStatus = async (newStatus: 'selesai' | 'belajar' | 'belum_mulai') => {
+    try {
+      setIsUpdating(true)
+      
+      // Update via API
+      const halamanId = `${jilidId}-${page}`
+      const statusValue = newStatus === 'selesai' ? 1 : newStatus === 'belajar' ? 0 : -1
+      
+      await apiClient.post('/api/progress/halaman', {
+        halamanId,
+        status: statusValue,
+        targetUserId: userId,
+        roomId: parseInt(roomId)
+      })
+
+      onStatusChange(newStatus)
+      setIsOpen(false)
+    } catch (error) {
+      console.error('Error updating page status:', error)
+      alert('Gagal mengupdate status halaman')
+    } finally {
+      setIsUpdating(false)
     }
   }
 
@@ -247,38 +159,29 @@ function PagePopup({
 
         <div className="grid grid-cols-1 gap-2 mt-4">
           <Button 
-            onClick={() => {
-              onStatusChange('selesai')
-              setIsOpen(false)
-            }}
+            onClick={() => handleUpdateStatus('selesai')}
             className="bg-green-500 hover:bg-green-600 text-white"
-            disabled={status === 'selesai'}
+            disabled={status === 'selesai' || isUpdating}
           >
             <CheckCircle className="h-4 w-4 mr-2" />
             {status === 'selesai' ? '✅ Sudah Lulus' : '✅ Tandai Lulus'}
           </Button>
           
           <Button 
-            onClick={() => {
-              onStatusChange('belajar')
-              setIsOpen(false)
-            }}
+            onClick={() => handleUpdateStatus('belajar')}
             variant="outline"
             className="border-yellow-300 text-yellow-600 hover:bg-yellow-50"
-            disabled={status === 'belajar'}
+            disabled={status === 'belajar' || isUpdating}
           >
             <PlayCircle className="h-4 w-4 mr-2" />
             {status === 'belajar' ? '📚 Sedang Belajar' : '📚 Tandai Belajar'}
           </Button>
 
           <Button 
-            onClick={() => {
-              onStatusChange('belum_mulai')
-              setIsOpen(false)
-            }}
+            onClick={() => handleUpdateStatus('belum_mulai')}
             variant="outline"
             className="border-gray-300 text-gray-600 hover:bg-gray-50"
-            disabled={status === 'belum_mulai'}
+            disabled={status === 'belum_mulai' || isUpdating}
           >
             <Circle className="h-4 w-4 mr-2" />
             {status === 'belum_mulai' ? '⚪ Sudah Reset' : '⚪ Reset/Belum Mulai'}
@@ -296,14 +199,15 @@ function PagePopup({
 }
 
 export default function StudentDetailPage({ params }: Props) {
-  const [jilidProgress, setJilidProgress] = useState(HARDCODED_STUDENT_DATA.jilidProgress)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [student, setStudent] = useState(HARDCODED_STUDENT_DATA.student)
-  const [room, setRoom] = useState(HARDCODED_STUDENT_DATA.room)
-  const [enrollment, setEnrollment] = useState(HARDCODED_STUDENT_DATA.enrollment)
-  const router = useRouter()
   const { roomId, userId } = params
+  const router = useRouter()
+
+  const [student, setStudent] = useState<any>(null)
+  const [room, setRoom] = useState<any>(null)
+  const [enrollment, setEnrollment] = useState<any>(null)
+  const [jilidProgress, setJilidProgress] = useState<JilidProgress[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -510,11 +414,41 @@ export default function StudentDetailPage({ params }: Props) {
     }))
   }
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#D5DBDB] via-[#D5DBDB] to-[#c8d0d0]">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[#147E7E] border-t-transparent mb-4"></div>
+          <p className="text-lg text-[#2C3E50] font-medium">Memuat data murid...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error || !student || !room) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#D5DBDB] via-[#D5DBDB] to-[#c8d0d0]">
+        <div className="max-w-md w-full p-8 bg-white rounded-3xl shadow-2xl space-y-4 text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+            <span className="text-3xl">⚠️</span>
+          </div>
+          <h2 className="text-2xl font-bold text-[#2C3E50]">Terjadi Kesalahan</h2>
+          <p className="text-red-600 font-medium">{error || 'Data tidak ditemukan'}</p>
+          <Button 
+            onClick={() => router.back()} 
+            className="mt-4 bg-[#147E7E] hover:bg-[#2C3E50] text-white"
+          >
+            Kembali
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   // Calculate overall stats
   const totalPages = jilidProgress.reduce((sum, jp) => sum + jp.total_pages, 0)
   const totalCompletedPages = jilidProgress.reduce((sum, jp) => sum + jp.completed_pages, 0)
   const overallPercentage = totalPages > 0 ? Math.round((totalCompletedPages / totalPages) * 100) : 0
-
   const completedJilid = jilidProgress.filter(jp => jp.status === 'selesai').length
 
   return (
@@ -574,7 +508,7 @@ export default function StudentDetailPage({ params }: Props) {
                 <div className="text-sm text-white/80 font-medium">Total Progress</div>
               </div>
               <div className="text-center p-4 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/20">
-                <div className="text-3xl font-black text-[#F1C40F]">{completedJilid}/7</div>
+                <div className="text-3xl font-black text-[#F1C40F]">{completedJilid}/{jilidProgress.length}</div>
                 <div className="text-sm text-white/80 font-medium">Jilid Selesai</div>
               </div>
             </div>
@@ -606,7 +540,7 @@ export default function StudentDetailPage({ params }: Props) {
                   <Star className="h-8 w-8 text-purple-600" />
                 </div>
                 <div>
-                  <div className="text-3xl font-black text-purple-900">{completedJilid}/7</div>
+                  <div className="text-3xl font-black text-purple-900">{completedJilid}/{jilidProgress.length}</div>
                   <div className="text-sm font-semibold text-purple-700 uppercase tracking-wide">Jilid Selesai</div>
                 </div>
               </div>
@@ -718,6 +652,9 @@ export default function StudentDetailPage({ params }: Props) {
                                   page={pageNumber}
                                   status={pageStatus}
                                   jilidName={jilid.jilid_name}
+                                  jilidId={jilid.jilid_id}
+                                  userId={userId}
+                                  roomId={roomId}
                                   onStatusChange={(newStatus) => 
                                     handlePageStatusChange(jilid.jilid_id, pageNumber, newStatus)
                                   }
