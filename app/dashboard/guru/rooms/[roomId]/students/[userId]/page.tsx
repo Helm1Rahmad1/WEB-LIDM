@@ -286,11 +286,11 @@ export default function StudentDetailPage({ params }: Props) {
               const halamanData = halamanDataRes.data.halaman || []
               const totalPages = halamanData.length
               
-              console.log(`✅ Jilid ${jilid.jilid_id} has ${totalPages} pages`)
+              console.log(`✅ Jilid ${jilid.jilid_id} (${jilid.jilid_name}) has ${totalPages} pages`)
               
               // Skip jilid if it has no pages yet
               if (totalPages === 0) {
-                console.log(`⚠️ Skipping Jilid ${jilid.jilid_id} - no pages found`)
+                console.log(`⚠️ Skipping Jilid ${jilid.jilid_id} - no pages found in database`)
                 return null
               }
               
@@ -346,7 +346,7 @@ export default function StudentDetailPage({ params }: Props) {
                 status = 'belajar'
               }
 
-              return {
+              const jilidProgressItem = {
                 jilid_id: jilid.jilid_id,
                 jilid_name: jilid.jilid_name,
                 description: jilid.description || '',
@@ -358,17 +358,24 @@ export default function StudentDetailPage({ params }: Props) {
                 completed_pages: completedPages,
                 pages_status: pagesStatus
               }
+              
+              console.log(`✅ Jilid ${jilid.jilid_id} progress:`, jilidProgressItem)
+              
+              return jilidProgressItem
             } catch (jilidError) {
-              console.error(`Error fetching progress for jilid ${jilid.jilid_id}:`, jilidError)
+              console.error(`❌ Error fetching progress for jilid ${jilid.jilid_id}:`, jilidError)
+              // Return null on error to skip this jilid
               return null
             }
           })
         )
 
-        // Filter out null values (jilid with no pages)
+        // Filter out null values (jilid with no pages or errors)
         const validJilidProgress = jilidProgressArray.filter((jp) => jp !== null) as JilidProgress[]
 
-        console.log('✅ Final Jilid Progress Array:', validJilidProgress)
+        console.log('✅ Valid Jilid Progress (after filtering):', validJilidProgress)
+        console.log(`📊 Total jilid to display: ${validJilidProgress.length}`)
+        
         setJilidProgress(validJilidProgress)
       } catch (err: any) {
         console.error('❌ Fetch student detail error:', err)
