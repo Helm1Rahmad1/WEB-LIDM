@@ -228,14 +228,20 @@ export default function StudentDetailPage({ params }: Props) {
         })
         
         console.log('✅ Enrollments data:', enrollmentsRes.data)
+        console.log('🔍 Looking for userId:', userId)
+        console.log('🔍 Available user_ids:', enrollmentsRes.data.enrollments.map((e: any) => e.user_id))
         
         const studentEnrollment = enrollmentsRes.data.enrollments.find(
-          (e: any) => e.user_id === userId
+          (e: any) => String(e.user_id) === String(userId)
         )
         
         if (!studentEnrollment) {
+          console.error('❌ Student not found! userId:', userId)
+          console.error('Available enrollments:', enrollmentsRes.data.enrollments)
           throw new Error('Student not found in this room')
         }
+
+        console.log('✅ Found student enrollment:', studentEnrollment)
 
         setStudent({
           user_id: studentEnrollment.user_id,
