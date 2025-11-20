@@ -47,6 +47,8 @@ router.get('/', async (req, res) => {
   try {
     const { jilidId } = req.query;
 
+    console.log('📄 GET /api/pages - jilidId:', jilidId);
+
     if (!jilidId) {
       return res.status(400).json({ 
         error: 'jilidId parameter is required' 
@@ -68,9 +70,10 @@ router.get('/', async (req, res) => {
       [jilidIdNum]
     );
 
+    console.log(`✅ Found ${result.rows.length} pages for jilid ${jilidIdNum}`);
     res.json({ halaman: result.rows });
   } catch (error) {
-    console.error('Get pages error:', error);
+    console.error('❌ Get pages error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
