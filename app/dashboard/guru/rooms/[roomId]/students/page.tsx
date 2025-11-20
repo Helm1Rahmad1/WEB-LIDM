@@ -112,6 +112,30 @@ export default function RoomStudentsPage({ params }: Props) {
 
         const raw = enrollRes.data.enrollments || []
         
+        // Fetch halaman data for each jilid to get real page counts
+        const jilidWithPages = await Promise.all(
+          allJilid.map(async (jilid: any) => {
+            try {
+              const halamanRes = await apiClient.get('/api/halaman', {
+                params: { jilidId: jilid.jilid_id }
+              })
+              const halaman = halamanRes.data.halaman || []
+              return {
+                ...jilid,
+                total_pages: halaman.length
+              }
+            } catch (err) {
+              console.error(`Error fetching halaman for jilid ${jilid.jilid_id}:`, err)
+              return {
+                ...jilid,
+                total_pages: 0
+              }
+            }
+          })
+        )
+
+        console.log('✅ Jilid with page counts:', jilidWithPages)
+        
         // Fetch progress for each student
         const studentsWithProgress = await Promise.all(
           raw.map(async (row: any) => {
@@ -131,12 +155,19 @@ export default function RoomStudentsPage({ params }: Props) {
               // Calculate completed jilid (where all letters in jilid are completed)
               const completedJilid = jilidProgress.filter((jp: any) => jp.completed).length
               
-              // Calculate total and completed pages from all jilid
+              // Calculate total and completed pages from ONLY jilid that have pages
               let totalPages = 0
               let totalCompletedPages = 0
               
-              for (const jilid of allJilid) {
-                const jilidPages = jilid.total_pages || 15
+              for (const jilid of jilidWithPages) {
+                const jilidPages = jilid.total_pages || 0
+                
+                // Skip jilid with no pages
+                if (jilidPages === 0) {
+                  console.log(`⚠️ Skipping Jilid ${jilid.jilid_id} - no pages in database`)
+                  continue
+                }
+                
                 totalPages += jilidPages
                 
                 // Get completed pages for this jilid
@@ -151,6 +182,8 @@ export default function RoomStudentsPage({ params }: Props) {
                   console.error(`Error fetching halaman progress for jilid ${jilid.jilid_id}:`, err)
                 }
               }
+              
+              console.log(`📊 Student ${row.name}: ${totalCompletedPages}/${totalPages} pages`)
               
               const progressPercentage = totalJilid > 0 
                 ? Math.round((completedJilid / totalJilid) * 100) 
