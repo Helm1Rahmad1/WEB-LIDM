@@ -182,7 +182,6 @@ export default function HomePage() {
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button className="group bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white shadow-lg hover:shadow-xl transition-all duration-300 font-semibold">
                   Daftar Gratis
-                  <Sparkles className="h-4 w-4 ml-2 group-hover:rotate-12 transition-transform" />
                 </Button>
               </motion.div>
             </Link>
