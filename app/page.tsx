@@ -332,7 +332,7 @@ export default function HomePage() {
                       transition={{ duration: 0.3 }}
                     >
                       <Image
-                        src="/phone.jpg"
+                        src="/phone.png"
                         alt="Sign Quran Mobile App"
                         width={400}
                         height={800}
