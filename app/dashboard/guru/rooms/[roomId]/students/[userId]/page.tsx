@@ -1,7 +1,8 @@
 "use client"
 
-import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import apiClient from "@/lib/api-client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -11,27 +12,19 @@ import {
   ArrowLeft, 
   User, 
   BookOpen, 
-  TrendingUp, 
   Calendar, 
   Mail, 
-  Award, 
-  Target, 
-  Clock,
-  ChevronRight,
-  Star,
   CheckCircle,
   Circle,
-  Trophy,
-  BarChart3,
+  Clock,
   FileText,
-  X,
-  PlayCircle
+  PlayCircle,
+  Star
 } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
 
 interface Props {
-  params: Promise<{ roomId: string; userId: string }>
+  params: { roomId: string; userId: string }
 }
 
 interface JilidProgress {
@@ -304,11 +297,191 @@ function PagePopup({
 
 export default function StudentDetailPage({ params }: Props) {
   const [jilidProgress, setJilidProgress] = useState(HARDCODED_STUDENT_DATA.jilidProgress)
-  
-  // Menggunakan hardcoded data
-  const student = HARDCODED_STUDENT_DATA.student
-  const room = HARDCODED_STUDENT_DATA.room
-  const enrollment = HARDCODED_STUDENT_DATA.enrollment
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [student, setStudent] = useState(HARDCODED_STUDENT_DATA.student)
+  const [room, setRoom] = useState(HARDCODED_STUDENT_DATA.room)
+  const [enrollment, setEnrollment] = useState(HARDCODED_STUDENT_DATA.enrollment)
+  const router = useRouter()
+  const { roomId, userId } = params
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+
+        console.log('🔍 Fetching data for userId:', userId, 'roomId:', roomId)
+
+        // Fetch room data
+        const roomRes = await apiClient.get(`/api/rooms/${roomId}`)
+        console.log('✅ Room data:', roomRes.data)
+        setRoom(roomRes.data.room)
+
+        // Fetch enrollment data to get student info
+        const enrollmentsRes = await apiClient.get(`/api/enrollments`, {
+          params: { roomId }
+        })
+        
+        console.log('✅ Enrollments data:', enrollmentsRes.data)
+        
+        const studentEnrollment = enrollmentsRes.data.enrollments.find(
+          (e: any) => e.user_id === userId
+        )
+        
+        if (!studentEnrollment) {
+          throw new Error('Student not found in this room')
+        }
+
+        setStudent({
+          user_id: studentEnrollment.user_id,
+          name: studentEnrollment.name,
+          email: studentEnrollment.email
+        })
+        
+        setEnrollment({
+          joined_at: studentEnrollment.joined_at
+        })
+
+        // Fetch all jilid data
+        const jilidRes = await apiClient.get('/api/jilid')
+        const allJilid = jilidRes.data.jilid || []
+        console.log('✅ All Jilid:', allJilid)
+
+        // Fetch progress data for this student using correct query parameters
+        const [letterProgressRes, jilidProgressRes] = await Promise.all([
+          apiClient.get('/api/progress/letter', {
+            params: { targetUserId: userId, roomId }
+          }),
+          apiClient.get('/api/progress/jilid', {
+            params: { targetUserId: userId, roomId }
+          })
+        ])
+
+        console.log('✅ Letter Progress:', letterProgressRes.data)
+        console.log('✅ Jilid Progress:', jilidProgressRes.data)
+
+        const letterProgress = letterProgressRes.data.progress || []
+        const jilidProgressData = jilidProgressRes.data.progress || []
+
+        // Fetch halaman progress for each jilid
+        const jilidProgressArray = await Promise.all(
+          allJilid.map(async (jilid: any) => {
+            try {
+              // Fetch halaman data for this jilid to get the real number of pages
+              const halamanDataRes = await apiClient.get('/api/halaman', {
+                params: { jilidId: jilid.jilid_id }
+              })
+              
+              const halamanData = halamanDataRes.data.halaman || []
+              const totalPages = halamanData.length
+              
+              console.log(`✅ Jilid ${jilid.jilid_id} has ${totalPages} pages`)
+              
+              // Fetch halaman progress for this specific jilid
+              const halamanProgressRes = await apiClient.get(
+                `/api/progress/halaman/by-jilid/${jilid.jilid_id}/${jilid.jilid_id}`,
+                {
+                  params: { targetUserId: userId }
+                }
+              )
+              
+              console.log(`✅ Halaman Progress for Jilid ${jilid.jilid_id}:`, halamanProgressRes.data)
+              
+              const halamanProgress = halamanProgressRes.data.progress || []
+              
+              // Get progress for this jilid
+              const jilidProg = jilidProgressData.find((jp: any) => jp.jilid_id === jilid.jilid_id)
+              
+              // Get letter progress for this jilid
+              const lettersInJilid = letterProgress.filter((lp: any) => lp.jilid_id === jilid.jilid_id)
+              const completedLetters = lettersInJilid.filter((lp: any) => lp.status === 'selesai').length
+              
+              // Build pages status object based on real halaman data
+              const pagesStatus: { [key: number]: 'selesai' | 'belajar' | 'belum_mulai' } = {}
+              
+              // Initialize all pages based on real halaman data
+              for (let i = 1; i <= totalPages; i++) {
+                pagesStatus[i] = 'belum_mulai'
+              }
+              
+              // Update status based on progress data
+              let completedPages = 0
+              halamanProgress.forEach((hp: any) => {
+                const pageNum = hp.nomor_halaman
+                if (pageNum >= 1 && pageNum <= totalPages) {
+                  if (hp.status === 1) {
+                    pagesStatus[pageNum] = 'selesai'
+                    completedPages++
+                  } else if (hp.status === 0) {
+                    pagesStatus[pageNum] = 'belajar'
+                  } else {
+                    pagesStatus[pageNum] = 'belum_mulai'
+                  }
+                }
+              })
+
+              const percentage = totalPages > 0 ? Math.round((completedPages / totalPages) * 100) : 0
+              
+              let status: 'belum_mulai' | 'belajar' | 'selesai' = 'belum_mulai'
+              if (percentage === 100) {
+                status = 'selesai'
+              } else if (percentage > 0) {
+                status = 'belajar'
+              }
+
+              return {
+                jilid_id: jilid.jilid_id,
+                jilid_name: jilid.jilid_name,
+                description: jilid.description || '',
+                total_letters: jilid.total_letters || lettersInJilid.length,
+                completed_letters: completedLetters,
+                percentage,
+                status,
+                total_pages: totalPages,
+                completed_pages: completedPages,
+                pages_status: pagesStatus
+              }
+            } catch (jilidError) {
+              console.error(`Error fetching progress for jilid ${jilid.jilid_id}:`, jilidError)
+              
+              // Return default values if fetch fails - use 14 as fallback based on database
+              const pagesStatus: { [key: number]: 'selesai' | 'belajar' | 'belum_mulai' } = {}
+              const defaultPages = 14
+              for (let i = 1; i <= defaultPages; i++) {
+                pagesStatus[i] = 'belum_mulai'
+              }
+              
+              return {
+                jilid_id: jilid.jilid_id,
+                jilid_name: jilid.jilid_name,
+                description: jilid.description || '',
+                total_letters: jilid.total_letters || 0,
+                completed_letters: 0,
+                percentage: 0,
+                status: 'belum_mulai' as const,
+                total_pages: defaultPages,
+                completed_pages: 0,
+                pages_status: pagesStatus
+              }
+            }
+          })
+        )
+
+        console.log('✅ Final Jilid Progress Array:', jilidProgressArray)
+        setJilidProgress(jilidProgressArray)
+      } catch (err: any) {
+        console.error('❌ Fetch student detail error:', err)
+        setError(err.response?.data?.error || err.message || 'Gagal memuat data murid')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    if (roomId && userId) {
+      fetchData()
+    }
+  }, [roomId, userId, router])
 
   // Function to handle status changes
   const handlePageStatusChange = (jilidId: number, page: number, newStatus: 'selesai' | 'belajar' | 'belum_mulai') => {

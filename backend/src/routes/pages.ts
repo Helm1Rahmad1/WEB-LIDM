@@ -5,6 +5,78 @@ const router = express.Router();
 
 /**
  * @swagger
+ * /api/pages:
+ *   get:
+ *     summary: Get all pages in a jilid
+ *     description: Get list of all pages (halaman) in a specific jilid
+ *     tags: [Pages]
+ *     parameters:
+ *       - name: jilidId
+ *         in: query
+ *         required: true
+ *         description: ID of the jilid
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: List of pages in the jilid
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 halaman:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       jilid_id:
+ *                         type: integer
+ *                       nomor_halaman:
+ *                         type: integer
+ *                       halaman_id:
+ *                         type: string
+ *                       deskripsi:
+ *                         type: string
+ *       400:
+ *         description: Missing jilidId parameter
+ *       500:
+ *         description: Internal server error
+ */
+router.get('/', async (req, res) => {
+  try {
+    const { jilidId } = req.query;
+
+    if (!jilidId) {
+      return res.status(400).json({ 
+        error: 'jilidId parameter is required' 
+      });
+    }
+
+    const jilidIdNum = Number(jilidId);
+    if (isNaN(jilidIdNum)) {
+      return res.status(400).json({ 
+        error: 'jilidId must be a valid number' 
+      });
+    }
+
+    const result = await pool.query(
+      `SELECT jilid_id, nomor_halaman, halaman_id, deskripsi
+       FROM halaman
+       WHERE jilid_id = $1
+       ORDER BY nomor_halaman`,
+      [jilidIdNum]
+    );
+
+    res.json({ halaman: result.rows });
+  } catch (error) {
+    console.error('Get pages error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * @swagger
  * /api/pages/detail:
  *   get:
  *     summary: Get detailed page information with hijaiyah letters
