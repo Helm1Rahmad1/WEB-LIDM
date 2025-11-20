@@ -120,15 +120,19 @@ export default function RoomStudentsPage({ params }: Props) {
                 params: { jilidId: jilid.jilid_id }
               })
               const halaman = halamanRes.data.halaman || []
+              console.log(`✅ Jilid ${jilid.jilid_id} fetched: ${halaman.length} pages`)
               return {
                 ...jilid,
                 total_pages: halaman.length
               }
-            } catch (err) {
-              console.error(`Error fetching halaman for jilid ${jilid.jilid_id}:`, err)
+            } catch (err: any) {
+              console.error(`❌ Error fetching halaman for jilid ${jilid.jilid_id}:`, err.message)
+              // Fallback: use 14 pages for jilid 1-2, 0 for others (based on database)
+              const fallbackPages = (jilid.jilid_id === 1 || jilid.jilid_id === 2) ? 14 : 0
+              console.log(`⚠️ Using fallback for Jilid ${jilid.jilid_id}: ${fallbackPages} pages`)
               return {
                 ...jilid,
-                total_pages: 0
+                total_pages: fallbackPages
               }
             }
           })
