@@ -156,12 +156,10 @@ export default function RoomStudentsPage({ params }: Props) {
 
               const jilidProgress = jilidProgressRes.data.progress || []
               
-              // Calculate completed jilid (where all letters in jilid are completed)
-              const completedJilid = jilidProgress.filter((jp: any) => jp.completed).length
-              
               // Calculate total and completed pages from ONLY jilid that have pages
               let totalPages = 0
               let totalCompletedPages = 0
+              let completedJilidCount = 0
               
               for (const jilid of jilidWithPages) {
                 const jilidPages = jilid.total_pages || 0
@@ -175,22 +173,32 @@ export default function RoomStudentsPage({ params }: Props) {
                 totalPages += jilidPages
                 
                 // Get completed pages for this jilid
+                let jilidCompletedPages = 0
                 try {
                   const halamanProgressRes = await apiClient.get(
                     `/api/progress/halaman/by-jilid/${jilid.jilid_id}/${jilid.jilid_id}`,
                     { params: { targetUserId: row.user_id } }
                   )
                   const halamanProgress = halamanProgressRes.data.progress || []
-                  totalCompletedPages += halamanProgress.filter((hp: any) => hp.status === 1).length
+                  jilidCompletedPages = halamanProgress.filter((hp: any) => hp.status === 1).length
+                  totalCompletedPages += jilidCompletedPages
+                  
+                  // Check if ALL pages in this jilid are completed
+                  if (jilidPages > 0 && jilidCompletedPages === jilidPages) {
+                    completedJilidCount++
+                    console.log(`✅ Jilid ${jilid.jilid_id} is COMPLETED for user ${row.name} (${jilidCompletedPages}/${jilidPages})`)
+                  }
                 } catch (err) {
                   console.error(`Error fetching halaman progress for jilid ${jilid.jilid_id}:`, err)
                 }
               }
               
-              console.log(`📊 Student ${row.name}: ${totalCompletedPages}/${totalPages} pages`)
+              console.log(`📊 Student ${row.name}: ${totalCompletedPages}/${totalPages} pages, ${completedJilidCount} jilid completed`)
               
-              const progressPercentage = totalJilid > 0 
-                ? Math.round((completedJilid / totalJilid) * 100) 
+              // Calculate progress percentage based on completed jilid (only count jilid that have pages)
+              const jilidWithPagesCount = jilidWithPages.filter(j => j.total_pages > 0).length
+              const progressPercentage = jilidWithPagesCount > 0 
+                ? Math.round((completedJilidCount / jilidWithPagesCount) * 100) 
                 : 0
 
               return {
@@ -203,8 +211,8 @@ export default function RoomStudentsPage({ params }: Props) {
                 },
                 totalPages,
                 totalCompletedPages,
-                completedJilid,
-                totalJilid,
+                completedJilid: completedJilidCount,
+                totalJilid: jilidWithPagesCount,
                 progressPercentage,
               }
             } catch (progressError) {
