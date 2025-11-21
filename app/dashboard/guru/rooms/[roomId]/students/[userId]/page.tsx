@@ -207,7 +207,7 @@ export default function StudentDetailPage({ params }: Props) {
               
               // Fetch halaman progress for this specific jilid
               const halamanProgressRes = await apiClient.get(
-                `/api/progress/halaman/by-jilid/${jilid.jilid_id}/${jilid.jilid_id}`,
+                `/api/progress/halaman/by-jilid/${jilid.jilid_id}`,
                 {
                   params: { targetUserId: userId }
                 }
@@ -286,7 +286,7 @@ export default function StudentDetailPage({ params }: Props) {
               // Try to fetch halaman progress even if halaman data fetch failed
               try {
                 const halamanProgressRes = await apiClient.get(
-                  `/api/progress/halaman/by-jilid/${jilid.jilid_id}/${jilid.jilid_id}`,
+                  `/api/progress/halaman/by-jilid/${jilid.jilid_id}`,
                   { params: { targetUserId: userId } }
                 )
                 

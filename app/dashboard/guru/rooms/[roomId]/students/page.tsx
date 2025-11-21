@@ -176,7 +176,7 @@ export default function RoomStudentsPage({ params }: Props) {
                 let jilidCompletedPages = 0
                 try {
                   const halamanProgressRes = await apiClient.get(
-                    `/api/progress/halaman/by-jilid/${jilid.jilid_id}/${jilid.jilid_id}`,
+                    `/api/progress/halaman/by-jilid/${jilid.jilid_id}`,
                     { params: { targetUserId: row.user_id } }
                   )
                   const halamanProgress = halamanProgressRes.data.progress || []

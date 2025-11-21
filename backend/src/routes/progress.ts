@@ -511,7 +511,7 @@ router.get('/halaman/:id', async (req: AuthRequest, res) => {
  *         schema:
  *           type: integer
  */
-router.get('/halaman/by-jilid/:jilidId/:jilidIdDuplicate', async (req: AuthRequest, res) => {
+router.get('/halaman/by-jilid/:jilidId', async (req: AuthRequest, res) => {
   try {
     const { jilidId } = req.params;
     const currentUserId = req.user!.userId;
