@@ -270,10 +270,70 @@ export default function StudentDetailPage({ params }: Props) {
               console.log(`✅ Jilid ${jilid.jilid_id} progress:`, jilidProgressItem)
               
               return jilidProgressItem
-            } catch (jilidError) {
-              console.error(`❌ Error fetching progress for jilid ${jilid.jilid_id}:`, jilidError)
-              // Return null on error to skip this jilid
-              return null
+            } catch (jilidError: any) {
+              console.error(`❌ Error fetching progress for jilid ${jilid.jilid_id}:`, jilidError.message)
+              
+              // FALLBACK: If API fails, try to use fallback pages (14 for jilid 1-2)
+              const fallbackPages = (jilid.jilid_id === 1 || jilid.jilid_id === 2) ? 14 : 0
+              
+              if (fallbackPages === 0) {
+                console.log(`⚠️ Skipping Jilid ${jilid.jilid_id} - no fallback data`)
+                return null
+              }
+              
+              console.log(`⚠️ Using FALLBACK for Jilid ${jilid.jilid_id}: ${fallbackPages} pages`)
+              
+              // Try to fetch halaman progress even if halaman data fetch failed
+              try {
+                const halamanProgressRes = await apiClient.get(
+                  `/api/progress/halaman/by-jilid/${jilid.jilid_id}/${jilid.jilid_id}`,
+                  { params: { targetUserId: userId } }
+                )
+                
+                const halamanProgress = halamanProgressRes.data.progress || []
+                
+                // Build pages status with fallback
+                const pagesStatus: { [key: number]: 'selesai' | 'belajar' | 'belum_mulai' } = {}
+                for (let i = 1; i <= fallbackPages; i++) {
+                  pagesStatus[i] = 'belum_mulai'
+                }
+                
+                let completedPages = 0
+                halamanProgress.forEach((hp: any) => {
+                  const pageNum = hp.nomor_halaman
+                  if (pageNum >= 1 && pageNum <= fallbackPages) {
+                    if (hp.status === 1) {
+                      pagesStatus[pageNum] = 'selesai'
+                      completedPages++
+                    } else if (hp.status === 0) {
+                      pagesStatus[pageNum] = 'belajar'
+                    }
+                  }
+                })
+                
+                const percentage = fallbackPages > 0 ? Math.round((completedPages / fallbackPages) * 100) : 0
+                let status: 'belum_mulai' | 'belajar' | 'selesai' = 'belum_mulai'
+                if (percentage === 100) status = 'selesai'
+                else if (percentage > 0) status = 'belajar'
+                
+                console.log(`✅ Fallback successful for Jilid ${jilid.jilid_id}: ${completedPages}/${fallbackPages} pages`)
+                
+                return {
+                  jilid_id: jilid.jilid_id,
+                  jilid_name: jilid.jilid_name,
+                  description: jilid.description || '',
+                  total_letters: jilid.total_letters || 0,
+                  completed_letters: 0,
+                  percentage,
+                  status,
+                  total_pages: fallbackPages,
+                  completed_pages: completedPages,
+                  pages_status: pagesStatus
+                }
+              } catch (fallbackError) {
+                console.error(`❌ Fallback also failed for jilid ${jilid.jilid_id}:`, fallbackError)
+                return null
+              }
             }
           })
         )
