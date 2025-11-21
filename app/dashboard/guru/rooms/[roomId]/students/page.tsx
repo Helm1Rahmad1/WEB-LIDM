@@ -199,6 +199,9 @@ export default function RoomStudentsPage({ params }: Props) {
               const progressPercentage = totalPages > 0 
                 ? Math.round((totalCompletedPages / totalPages) * 100) 
                 : 0
+              
+              // Calculate total jilid that have pages
+              const jilidWithPagesCount = jilidWithPages.filter(j => j.total_pages > 0).length
 
               return {
                 enrollment_id: row.enrollment_id,
