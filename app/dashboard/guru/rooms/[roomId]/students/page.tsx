@@ -195,10 +195,9 @@ export default function RoomStudentsPage({ params }: Props) {
               
               console.log(`📊 Student ${row.name}: ${totalCompletedPages}/${totalPages} pages, ${completedJilidCount} jilid completed`)
               
-              // Calculate progress percentage based on completed jilid (only count jilid that have pages)
-              const jilidWithPagesCount = jilidWithPages.filter(j => j.total_pages > 0).length
-              const progressPercentage = jilidWithPagesCount > 0 
-                ? Math.round((completedJilidCount / jilidWithPagesCount) * 100) 
+              // Calculate progress percentage based on total pages completed (not jilid)
+              const progressPercentage = totalPages > 0 
+                ? Math.round((totalCompletedPages / totalPages) * 100) 
                 : 0
 
               return {
