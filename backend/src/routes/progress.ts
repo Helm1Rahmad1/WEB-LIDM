@@ -284,25 +284,55 @@ router.get('/halaman/:id', async (req: AuthRequest, res) => {
  * @swagger
  * /api/progress/halaman/by-jilid/{jilidId}:
  *   get:
- *     summary: Get all halaman progress for a jilid for current user
- *     description: Get progress status for all pages in a jilid
+ *     summary: Get all halaman progress for a jilid
+ *     description: Get progress status for all pages in a jilid. Guru can specify targetUserId to view other users' progress.
  *     tags: [Progress]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - name: jilidId
+ *         in: path
+ *         required: true
+ *         description: ID of the jilid
+ *         schema:
+ *           type: integer
+ *       - name: targetUserId
+ *         in: query
+ *         required: false
+ *         description: User ID to view progress for (guru only)
+ *         schema:
+ *           type: integer
  */
 router.get('/halaman/by-jilid/:jilidId', async (req: AuthRequest, res) => {
   try {
     const { jilidId } = req.params;
-    const userId = req.user!.userId;
+    const currentUserId = req.user!.userId;
+    const userRole = req.user!.role;
+    const { targetUserId } = req.query;
+
+    // Determine which user's progress to fetch
+    let fetchUserId = currentUserId;
+    
+    if (userRole === 'guru' && targetUserId) {
+      // Guru can view other users' progress
+      fetchUserId = targetUserId as string;
+    } else if (userRole === 'murid' && targetUserId && targetUserId !== currentUserId) {
+      // Murid cannot view other users' progress
+      return res.status(403).json({ error: 'Forbidden: Cannot view other users\' progress' });
+    }
+
+    console.log(`📊 Fetching halaman progress for user ${fetchUserId}, jilid ${jilidId}`);
 
     const result = await pool.query(
-      `SELECT uhp.halaman_id, uhp.status, uhp.last_update, h.nomor_halaman
+      `SELECT uhp.halaman_id, uhp.status, uhp.last_update, h.nomor_halaman, h.jilid_id
        FROM user_halaman_progress uhp
        LEFT JOIN halaman h ON CAST(h.halaman_id AS TEXT) = uhp.halaman_id
        WHERE uhp.user_id = $1 AND h.jilid_id = $2
        ORDER BY h.nomor_halaman`,
-      [userId, jilidId]
+      [fetchUserId, jilidId]
     );
+
+    console.log(`✅ Found ${result.rows.length} halaman progress records for user ${fetchUserId}, jilid ${jilidId}`);
 
     res.json({ progress: result.rows });
   } catch (error) {
