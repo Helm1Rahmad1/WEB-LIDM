@@ -175,7 +175,7 @@ export default function StudentDetailPage({ params }: Props) {
             params: { targetUserId: userId, roomId }
           }),
           apiClient.get('/api/progress/jilid', {
-            params: { targetUserId: userId, roomId }
+            params: { targetUserId: userId }
           })
         ])
 
@@ -183,7 +183,7 @@ export default function StudentDetailPage({ params }: Props) {
         console.log('✅ Jilid Progress:', jilidProgressRes.data)
 
         const letterProgress = letterProgressRes.data.progress || []
-        const jilidProgressData = jilidProgressRes.data.progress || []
+        const apiJilidProgressData = jilidProgressRes.data.progress || [] // This has the new API format
 
         // Fetch halaman progress for each jilid
         const jilidProgressArray = await Promise.all(
@@ -245,7 +245,13 @@ export default function StudentDetailPage({ params }: Props) {
                 }
               })
 
-              const percentage = totalPages > 0 ? Math.round((completedPages / totalPages) * 100) : 0
+              // Find matching jilid progress from the new API response
+              const apiJilidProgressItem = apiJilidProgressData.find((jp: any) => jp.jilid_id === jilid.jilid_id);
+              
+              // Use progress data from the new API if available, otherwise calculate from halaman data
+              const percentage = apiJilidProgressItem 
+                ? apiJilidProgressItem.progress_percentage 
+                : (totalPages > 0 ? Math.round((completedPages / totalPages) * 100) : 0);
               
               let status: 'belum_mulai' | 'belajar' | 'selesai' = 'belum_mulai'
               if (percentage === 100) {
@@ -263,7 +269,9 @@ export default function StudentDetailPage({ params }: Props) {
                 percentage,
                 status,
                 total_pages: totalPages,
-                completed_pages: completedPages,
+                completed_pages: apiJilidProgressItem 
+                  ? apiJilidProgressItem.total_halaman_selesai 
+                  : completedPages,
                 pages_status: pagesStatus
               }
               
@@ -318,6 +326,9 @@ export default function StudentDetailPage({ params }: Props) {
                 
                 console.log(`✅ Fallback successful for Jilid ${jilid.jilid_id}: ${completedPages}/${fallbackPages} pages`)
                 
+                // Use API data if available, otherwise use calculated data
+                const fallbackApiJilidProgressItem = apiJilidProgressData.find((jp: any) => jp.jilid_id === jilid.jilid_id);
+                
                 return {
                   jilid_id: jilid.jilid_id,
                   jilid_name: jilid.jilid_name,
@@ -327,7 +338,9 @@ export default function StudentDetailPage({ params }: Props) {
                   percentage,
                   status,
                   total_pages: fallbackPages,
-                  completed_pages: completedPages,
+                  completed_pages: fallbackApiJilidProgressItem 
+                    ? fallbackApiJilidProgressItem.total_halaman_selesai 
+                    : completedPages,
                   pages_status: pagesStatus
                 }
               } catch (fallbackError) {

@@ -491,4 +491,273 @@ router.delete('/halaman/:id', requireRole(['guru']), async (req: AuthRequest, re
   }
 });
 
+/**
+ * @swagger
+ * /api/progress/jilid:
+ *   get:
+ *     summary: Get jilid progress for a user
+ *     description: Get progress status for all jilid for a specific user (guru can view other users' progress)
+ *     tags: [Progress]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: targetUserId
+ *         in: query
+ *         required: false
+ *         description: User ID to view progress for (guru only)
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Jilid progress data for the user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 progress:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       user_id:
+ *                         type: integer
+ *                         description: User ID
+ *                       jilid_id:
+ *                         type: integer
+ *                         description: Jilid ID
+ *                       jilid_name:
+ *                         type: string
+ *                         description: Name of the jilid
+ *                       total_jilid_pages:
+ *                         type: integer
+ *                         description: Total number of pages in this jilid
+ *                       total_halaman_selesai:
+ *                         type: integer
+ *                         description: Number of completed pages
+ *                       progress_percentage:
+ *                         type: number
+ *                         description: Progress percentage (0-100)
+ *       400:
+ *         description: Missing required parameters
+ *       500:
+ *         description: Internal server error
+ */
+router.get('/jilid', async (req: AuthRequest, res) => {
+  try {
+    const currentUserId = req.user!.userId;
+    const userRole = req.user!.role;
+    const { targetUserId } = req.query;
+
+    // Determine which user's progress to fetch
+    let fetchUserId = currentUserId;
+
+    if (userRole === 'guru' && targetUserId) {
+      // Guru can view other users' progress
+      fetchUserId = targetUserId as string;
+    } else if (userRole === 'murid' && targetUserId && targetUserId !== currentUserId) {
+      // Murid cannot view other users' progress
+      return res.status(403).json({ error: 'Forbidden: Cannot view other users\' progress' });
+    }
+
+    console.log(`📊 Fetching jilid progress for user ${fetchUserId}`);
+
+    // Query to get total pages per jilid
+    const totalPagesQuery = `
+      SELECT 
+        j.jilid_id,
+        j.jilid_name,
+        COUNT(h.halaman_id) AS total_pages
+      FROM jilid j
+      LEFT JOIN halaman h ON j.jilid_id = h.jilid_id
+      GROUP BY j.jilid_id, j.jilid_name
+      ORDER BY j.jilid_id
+    `;
+    
+    const totalPagesResult = await pool.query(totalPagesQuery);
+    const jilidInfo = totalPagesResult.rows;
+
+    // Query to get completed pages per jilid for the user
+    const completedPagesQuery = `
+      SELECT
+        uhp.user_id,
+        j.jilid_id,
+        j.jilid_name,
+        COUNT(DISTINCT uhp.halaman_id) AS total_halaman_selesai
+      FROM user_halaman_progress uhp
+      JOIN halaman h ON h.halaman_id = uhp.halaman_id
+      JOIN jilid j ON j.jilid_id = h.jilid_id
+      WHERE uhp.user_id = $1 AND uhp.status = 1
+      GROUP BY uhp.user_id, j.jilid_id, j.jilid_name
+      ORDER BY j.jilid_id
+    `;
+    
+    const completedPagesResult = await pool.query(completedPagesQuery, [fetchUserId]);
+    const completedProgress = completedPagesResult.rows;
+
+    // Combine the data to calculate progress percentage
+    const jilidProgressData = jilidInfo.map(jilid => {
+      const completedData = completedProgress.find(data => data.jilid_id === jilid.jilid_id);
+      const totalHalamanSelesai = completedData ? completedData.total_halaman_selesai : 0;
+      const totalJilidPages = parseInt(jilid.total_pages) || 0;
+      
+      const progressPercentage = totalJilidPages > 0 
+        ? Math.round((totalHalamanSelesai / totalJilidPages) * 100) 
+        : 0;
+
+      return {
+        user_id: parseInt(fetchUserId),
+        jilid_id: jilid.jilid_id,
+        jilid_name: jilid.jilid_name,
+        total_jilid_pages: totalJilidPages,
+        total_halaman_selesai: totalHalamanSelesai,
+        progress_percentage: progressPercentage
+      };
+    });
+
+    console.log(`✅ Found progress for ${jilidProgressData.length} jilid(s) for user ${fetchUserId}`);
+    res.json({ progress: jilidProgressData });
+  } catch (error) {
+    console.error('Get jilid progress error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/progress/jilid/{jilidId}:
+ *   get:
+ *     summary: Get progress for a specific jilid
+ *     description: Get progress status for a specific jilid for the current user (guru can view other users' progress)
+ *     tags: [Progress]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: jilidId
+ *         in: path
+ *         required: true
+ *         description: ID of the jilid
+ *         schema:
+ *           type: integer
+ *       - name: targetUserId
+ *         in: query
+ *         required: false
+ *         description: User ID to view progress for (guru only)
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Jilid progress data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 progress:
+ *                   type: object
+ *                   properties:
+ *                     user_id:
+ *                       type: integer
+ *                       description: User ID
+ *                     jilid_id:
+ *                       type: integer
+ *                       description: Jilid ID
+ *                     jilid_name:
+ *                       type: string
+ *                       description: Name of the jilid
+ *                     total_jilid_pages:
+ *                       type: integer
+ *                       description: Total number of pages in this jilid
+ *                     total_halaman_selesai:
+ *                       type: integer
+ *                       description: Number of completed pages
+ *                     progress_percentage:
+ *                       type: number
+ *                       description: Progress percentage (0-100)
+ *       400:
+ *         description: Missing required parameters
+ *       500:
+ *         description: Internal server error
+ */
+router.get('/jilid/:jilidId', async (req: AuthRequest, res) => {
+  try {
+    const { jilidId } = req.params;
+    const currentUserId = req.user!.userId;
+    const userRole = req.user!.role;
+    const { targetUserId } = req.query;
+
+    // Determine which user's progress to fetch
+    let fetchUserId = currentUserId;
+
+    if (userRole === 'guru' && targetUserId) {
+      // Guru can view other users' progress
+      fetchUserId = targetUserId as string;
+    } else if (userRole === 'murid' && targetUserId && targetUserId !== currentUserId) {
+      // Murid cannot view other users' progress
+      return res.status(403).json({ error: 'Forbidden: Cannot view other users\' progress' });
+    }
+
+    console.log(`📊 Fetching progress for user ${fetchUserId} in jilid ${jilidId}`);
+
+    // Query to get total pages in the specified jilid
+    const totalPagesQuery = `
+      SELECT 
+        j.jilid_id,
+        j.jilid_name,
+        COUNT(h.halaman_id) AS total_pages
+      FROM jilid j
+      LEFT JOIN halaman h ON j.jilid_id = h.jilid_id
+      WHERE j.jilid_id = $1
+      GROUP BY j.jilid_id, j.jilid_name
+    `;
+    
+    const totalPagesResult = await pool.query(totalPagesQuery, [jilidId]);
+    
+    if (totalPagesResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Jilid not found' });
+    }
+    
+    const jilidInfo = totalPagesResult.rows[0];
+    const totalJilidPages = parseInt(jilidInfo.total_pages) || 0;
+
+    // Query to get completed pages in this jilid for the user
+    const completedPagesQuery = `
+      SELECT
+        uhp.user_id,
+        j.jilid_id,
+        j.jilid_name,
+        COUNT(DISTINCT uhp.halaman_id) AS total_halaman_selesai
+      FROM user_halaman_progress uhp
+      JOIN halaman h ON h.halaman_id = uhp.halaman_id
+      JOIN jilid j ON j.jilid_id = h.jilid_id
+      WHERE uhp.user_id = $1 AND j.jilid_id = $2 AND uhp.status = 1
+      GROUP BY uhp.user_id, j.jilid_id, j.jilid_name
+    `;
+    
+    const completedPagesResult = await pool.query(completedPagesQuery, [fetchUserId, jilidId]);
+    const totalHalamanSelesai = completedPagesResult.rows.length > 0 
+      ? completedPagesResult.rows[0].total_halaman_selesai 
+      : 0;
+    
+    const progressPercentage = totalJilidPages > 0 
+      ? Math.round((totalHalamanSelesai / totalJilidPages) * 100) 
+      : 0;
+
+    const progressData = {
+      user_id: parseInt(fetchUserId),
+      jilid_id: jilidInfo.jilid_id,
+      jilid_name: jilidInfo.jilid_name,
+      total_jilid_pages: totalJilidPages,
+      total_halaman_selesai: totalHalamanSelesai,
+      progress_percentage: progressPercentage
+    };
+
+    console.log(`✅ Progress for user ${fetchUserId} in jilid ${jilidId}: ${totalHalamanSelesai}/${totalJilidPages} pages (${progressPercentage}%)`);
+    res.json({ progress: progressData });
+  } catch (error) {
+    console.error('Get specific jilid progress error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;
