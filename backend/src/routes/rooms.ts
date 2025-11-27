@@ -269,6 +269,7 @@ router.get('/:id', async (req: AuthRequest, res) => {
 
     const room = result.rows[0];
 
+    // Cek akses murid
     if (role === 'murid') {
       const enrollmentCheck = await pool.query(
         'SELECT enrollment_id FROM enrollments WHERE user_id = $1 AND room_id = $2',
@@ -280,7 +281,25 @@ router.get('/:id', async (req: AuthRequest, res) => {
       }
     }
 
-    res.json({ room: room });
+    // Ambil info guru
+    const guruResult = await pool.query(
+      'SELECT user_id, name, email FROM users WHERE user_id = $1',
+      [room.created_by]
+    );
+    const guru = guruResult.rows[0] || null;
+
+    // Ambil daftar murid
+    const muridResult = await pool.query(
+      `SELECT u.user_id, u.name, u.email, e.joined_at 
+       FROM users u
+       INNER JOIN enrollments e ON u.user_id = e.user_id
+       WHERE e.room_id = $1 AND u.role = 'murid'
+       ORDER BY e.joined_at DESC`,
+      [id]
+    );
+    const murid = muridResult.rows;
+
+    res.json({ room, guru, murid });
   } catch (error) {
     console.error('Get room error:', error);
     res.status(500).json({ error: 'Internal server error' });
