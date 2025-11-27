@@ -6,28 +6,6 @@ const router = express.Router();
 
 router.use(authenticateToken);
 
-/**
- * @swagger
- * /api/rooms:
- *   get:
- *     summary: Get all rooms (guru melihat rooms yang dibuat, murid melihat rooms yang diikuti)
- *     tags: [Rooms]
- *     security:
- *       - bearerAuth: []
- *       - cookieAuth: []
- *     responses:
- *       200:
- *         description: List of rooms
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 rooms:
- *                   type: array
- *                   items:
- *                     type: object
- */
 router.get('/', async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
@@ -37,7 +15,6 @@ router.get('/', async (req: AuthRequest, res) => {
     let params;
 
     if (role === 'guru') {
-      // Query untuk guru: ambil semua kelas yang dibuat, plus hitung jumlah murid
       query = `
         SELECT 
           r.*,
@@ -50,7 +27,6 @@ router.get('/', async (req: AuthRequest, res) => {
       `;
       params = [userId];
     } else {
-      // Query untuk murid: ambil kelas yang diikuti
       query = `
         SELECT 
           r.*,
@@ -66,13 +42,11 @@ router.get('/', async (req: AuthRequest, res) => {
     }
 
     const result = await pool.query(query, params);
-    
-    // Convert student_count dari string ke number
     const rooms = result.rows.map(room => ({
       ...room,
       student_count: parseInt(room.student_count) || 0
     }));
-    
+
     res.json({ rooms });
   } catch (error) {
     console.error('Get rooms error:', error);
@@ -80,40 +54,6 @@ router.get('/', async (req: AuthRequest, res) => {
   }
 });
 
-/**
- * @swagger
- * /api/rooms:
- *   post:
- *     summary: Create new room (hanya guru)
- *     tags: [Rooms]
- *     security:
- *       - bearerAuth: []
- *       - cookieAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - name
- *               - code
- *             properties:
- *               name:
- *                 type: string
- *                 example: Kelas Hijaiyah A
- *               description:
- *                 type: string
- *                 example: Kelas belajar huruf hijaiyah untuk pemula
- *               code:
- *                 type: string
- *                 example: KELAS123
- *     responses:
- *       201:
- *         description: Room created successfully
- *       403:
- *         description: Only guru can create rooms
- */
 router.post('/', requireRole(['guru']), async (req: AuthRequest, res) => {
   try {
     const { name, description, code } = req.body;
@@ -131,35 +71,6 @@ router.post('/', requireRole(['guru']), async (req: AuthRequest, res) => {
   }
 });
 
-/**
- * @swagger
- * /api/rooms/join:
- *   post:
- *     summary: Join room dengan kode (hanya murid)
- *     tags: [Rooms]
- *     security:
- *       - bearerAuth: []
- *       - cookieAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - code
- *             properties:
- *               code:
- *                 type: string
- *                 example: KELAS123
- *     responses:
- *       200:
- *         description: Joined room successfully
- *       400:
- *         description: Already enrolled
- *       404:
- *         description: Room not found
- */
 router.post('/join', requireRole(['murid']), async (req: AuthRequest, res) => {
   try {
     const { code } = req.body;
@@ -193,28 +104,31 @@ router.post('/join', requireRole(['murid']), async (req: AuthRequest, res) => {
   }
 });
 
-/**
- * @swagger
- * /api/rooms/{roomId}/students:
- *   get:
- *     summary: Get list murid di room (hanya guru)
- *     tags: [Rooms]
- *     security:
- *       - bearerAuth: []
- *       - cookieAuth: []
- *     parameters:
- *       - in: path
- *         name: roomId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: List of students in room
- */
-router.get('/:roomId/students', requireRole(['guru']), async (req: AuthRequest, res) => {
+router.get('/:roomId/students', async (req: AuthRequest, res) => {
   try {
     const { roomId } = req.params;
+    const userId = req.user!.userId;
+    const role = req.user!.role;
+
+    if (role === 'murid') {
+      const enrollment = await pool.query(
+        'SELECT 1 FROM enrollments WHERE user_id = $1 AND room_id = $2',
+        [userId, roomId]
+      );
+      if (enrollment.rowCount === 0) {
+        return res.status(403).json({ error: 'Not enrolled in this room' });
+      }
+    } else if (role === 'guru') {
+      const ownership = await pool.query(
+        'SELECT 1 FROM rooms WHERE room_id = $1 AND created_by = $2',
+        [roomId, userId]
+      );
+      if (ownership.rowCount === 0) {
+        return res.status(403).json({ error: 'Not authorized to access this room' });
+      }
+    } else {
+      return res.status(403).json({ error: 'Role not permitted' });
+    }
 
     const result = await pool.query(
       `SELECT u.user_id, u.name, u.email, e.joined_at 
@@ -232,29 +146,6 @@ router.get('/:roomId/students', requireRole(['guru']), async (req: AuthRequest, 
   }
 });
 
-/**
- * @swagger
- * /api/rooms/{id}:
- *   get:
- *     summary: Get room detail by ID
- *     tags: [Rooms]
- *     security:
- *       - bearerAuth: []
- *       - cookieAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Room detail
- *       404:
- *         description: Room not found
- *       403:
- *         description: Not enrolled in this room
- */
 router.get('/:id', async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -287,41 +178,6 @@ router.get('/:id', async (req: AuthRequest, res) => {
   }
 });
 
-/**
- * @swagger
- * /api/rooms/{id}:
- *   put:
- *     summary: Update room (hanya guru pemilik room)
- *     tags: [Rooms]
- *     security:
- *       - bearerAuth: []
- *       - cookieAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *               description:
- *                 type: string
- *               code:
- *                 type: string
- *     responses:
- *       200:
- *         description: Room updated successfully
- *       403:
- *         description: Not authorized
- *       404:
- *         description: Room not found
- */
 router.put('/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -388,29 +244,6 @@ router.put('/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
   }
 });
 
-/**
- * @swagger
- * /api/rooms/{id}:
- *   delete:
- *     summary: Delete room (hanya guru pemilik room)
- *     tags: [Rooms]
- *     security:
- *       - bearerAuth: []
- *       - cookieAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Room deleted successfully
- *       403:
- *         description: Not authorized
- *       404:
- *         description: Room not found
- */
 router.delete('/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
