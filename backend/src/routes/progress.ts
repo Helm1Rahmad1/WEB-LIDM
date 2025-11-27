@@ -19,10 +19,12 @@ router.get('/letter', async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
     const userRole = req.user!.role;
-    const { roomId, targetUserId, status } = req.query;
+    const { targetUserId } = req.query;
 
+    // Based on your current table structure, user_letter_progress only has progress_id, user_id, hijaiyah_id, last_update
+    // The API was previously designed to work with a table that had room_id and status, but your current table doesn't have these
     let query = `
-      SELECT ulp.*, h.latin_name, h.arabic_char, u.name as user_name
+      SELECT ulp.progress_id, ulp.user_id, ulp.hijaiyah_id, ulp.last_update, h.latin_name, h.arabic_char, u.name as user_name
       FROM user_letter_progress ulp
       INNER JOIN hijaiyah h ON ulp.hijaiyah_id = h.hijaiyah_id
       INNER JOIN users u ON ulp.user_id = u.user_id
@@ -38,18 +40,6 @@ router.get('/letter', async (req: AuthRequest, res) => {
     } else if (targetUserId) {
       query += ` AND ulp.user_id = $${paramCount}`;
       params.push(targetUserId);
-      paramCount++;
-    }
-
-    if (roomId) {
-      query += ` AND ulp.room_id = $${paramCount}`;
-      params.push(roomId);
-      paramCount++;
-    }
-
-    if (status) {
-      query += ` AND ulp.status = $${paramCount}`;
-      params.push(status);
       paramCount++;
     }
 
@@ -79,7 +69,7 @@ router.get('/letter/:id', async (req: AuthRequest, res) => {
     const userRole = req.user!.role;
 
     const result = await pool.query(
-      `SELECT ulp.*, h.latin_name, h.arabic_char, u.name as user_name
+      `SELECT ulp.progress_id, ulp.user_id, ulp.hijaiyah_id, ulp.last_update, h.latin_name, h.arabic_char, u.name as user_name
        FROM user_letter_progress ulp
        INNER JOIN hijaiyah h ON ulp.hijaiyah_id = h.hijaiyah_id
        INNER JOIN users u ON ulp.user_id = u.user_id
@@ -104,109 +94,14 @@ router.get('/letter/:id', async (req: AuthRequest, res) => {
   }
 });
 
-/**
- * @swagger
- * /api/progress/jilid:
- *   get:
- *     summary: Get jilid progress
- *     tags: [Progress]
- *     security:
- *       - bearerAuth: []
- */
-router.get('/jilid', async (req: AuthRequest, res) => {
-  try {
-    const userId = req.user!.userId;
-    const userRole = req.user!.role;
-    const { roomId, targetUserId, status } = req.query;
 
-    let query = `
-      SELECT ujp.*, j.jilid_name, j.description, u.name as user_name
-      FROM user_jilid_progress ujp
-      INNER JOIN jilid j ON ujp.jilid_id = j.jilid_id
-      INNER JOIN users u ON ujp.user_id = u.user_id
-      WHERE 1=1
-    `;
-    const params: any[] = [];
-    let paramCount = 1;
 
-    if (userRole === 'murid') {
-      query += ` AND ujp.user_id = $${paramCount}`;
-      params.push(userId);
-      paramCount++;
-    } else if (targetUserId) {
-      query += ` AND ujp.user_id = $${paramCount}`;
-      params.push(targetUserId);
-      paramCount++;
-    }
-
-    if (roomId) {
-      query += ` AND ujp.room_id = $${paramCount}`;
-      params.push(roomId);
-      paramCount++;
-    }
-
-    if (status) {
-      query += ` AND ujp.status = $${paramCount}`;
-      params.push(status);
-      paramCount++;
-    }
-
-    query += ' ORDER BY j.jilid_id';
-
-    const result = await pool.query(query, params);
-    res.json({ progress: result.rows });
-  } catch (error) {
-    console.error('Get jilid progress error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-/**
- * @swagger
- * /api/progress/jilid/{id}:
- *   get:
- *     summary: Get jilid progress by ID
- *     tags: [Progress]
- *     security:
- *       - bearerAuth: []
- */
-router.get('/jilid/:id', async (req: AuthRequest, res) => {
-  try {
-    const { id } = req.params;
-    const userId = req.user!.userId;
-    const userRole = req.user!.role;
-
-    const result = await pool.query(
-      `SELECT ujp.*, j.jilid_name, j.description, u.name as user_name
-       FROM user_jilid_progress ujp
-       INNER JOIN jilid j ON ujp.jilid_id = j.jilid_id
-       INNER JOIN users u ON ujp.user_id = u.user_id
-       WHERE ujp.user_jilid_id = $1`,
-      [id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Jilid progress not found' });
-    }
-
-    const progress = result.rows[0];
-
-    if (userRole === 'murid' && progress.user_id !== userId) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-
-    res.json({ progress: progress });
-  } catch (error) {
-    console.error('Get jilid progress error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
 /**
  * @swagger
  * /api/progress/letter:
  *   post:
- *     summary: Update letter progress
+ *     summary: Update letter progress (using current table structure)
  *     tags: [Progress]
  *     security:
  *       - bearerAuth: []
@@ -214,19 +109,20 @@ router.get('/jilid/:id', async (req: AuthRequest, res) => {
 router.post('/letter', async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
-    const { roomId, hijaiyahId, status } = req.body;
+    const { hijaiyahId } = req.body;
 
-    if (!roomId || !hijaiyahId || !status) {
-      return res.status(400).json({ error: 'roomId, hijaiyahId, and status are required' });
+    if (!hijaiyahId) {
+      return res.status(400).json({ error: 'hijaiyahId is required' });
     }
 
+    // Insert or update using only existing columns in current table
     const result = await pool.query(
-      `INSERT INTO user_letter_progress (user_id, room_id, hijaiyah_id, status)
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT (user_id, room_id, hijaiyah_id) 
-       DO UPDATE SET status = $4, last_update = CURRENT_TIMESTAMP
+      `INSERT INTO user_letter_progress (user_id, hijaiyah_id, last_update)
+       VALUES ($1, $2, CURRENT_TIMESTAMP)
+       ON CONFLICT (user_id, hijaiyah_id) 
+       DO UPDATE SET last_update = CURRENT_TIMESTAMP
        RETURNING *`,
-      [userId, roomId, hijaiyahId, status]
+      [userId, hijaiyahId]
     );
 
     res.json({ progress: result.rows[0] });
@@ -240,7 +136,7 @@ router.post('/letter', async (req: AuthRequest, res) => {
  * @swagger
  * /api/progress/letter/{id}:
  *   put:
- *     summary: Update letter progress status (guru)
+ *     summary: Update letter progress (using current table structure)
  *     tags: [Progress]
  *     security:
  *       - bearerAuth: []
@@ -248,15 +144,10 @@ router.post('/letter', async (req: AuthRequest, res) => {
 router.put('/letter/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
-
-    if (!status) {
-      return res.status(400).json({ error: 'status is required' });
-    }
 
     const result = await pool.query(
-      'UPDATE user_letter_progress SET status = $1, last_update = CURRENT_TIMESTAMP WHERE progress_id = $2 RETURNING *',
-      [status, id]
+      'UPDATE user_letter_progress SET last_update = CURRENT_TIMESTAMP WHERE progress_id = $1 RETURNING *',
+      [id]
     );
 
     if (result.rows.length === 0) {
@@ -299,102 +190,8 @@ router.delete('/letter/:id', requireRole(['guru']), async (req: AuthRequest, res
   }
 });
 
-/**
- * @swagger
- * /api/progress/jilid:
- *   post:
- *     summary: Update jilid progress
- *     tags: [Progress]
- *     security:
- *       - bearerAuth: []
- */
-router.post('/jilid', async (req: AuthRequest, res) => {
-  try {
-    const userId = req.user!.userId;
-    const { roomId, jilidId, status } = req.body;
 
-    if (!roomId || !jilidId || !status) {
-      return res.status(400).json({ error: 'roomId, jilidId, and status are required' });
-    }
 
-    const result = await pool.query(
-      `INSERT INTO user_jilid_progress (user_id, room_id, jilid_id, status)
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT (user_id, room_id, jilid_id) 
-       DO UPDATE SET status = $4, last_update = CURRENT_TIMESTAMP
-       RETURNING *`,
-      [userId, roomId, jilidId, status]
-    );
-
-    res.json({ progress: result.rows[0] });
-  } catch (error) {
-    console.error('Update jilid progress error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-/**
- * @swagger
- * /api/progress/jilid/{id}:
- *   put:
- *     summary: Update jilid progress status (guru)
- *     tags: [Progress]
- *     security:
- *       - bearerAuth: []
- */
-router.put('/jilid/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    if (!status) {
-      return res.status(400).json({ error: 'status is required' });
-    }
-
-    const result = await pool.query(
-      'UPDATE user_jilid_progress SET status = $1, last_update = CURRENT_TIMESTAMP WHERE user_jilid_id = $2 RETURNING *',
-      [status, id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Jilid progress not found' });
-    }
-
-    res.json({ progress: result.rows[0] });
-  } catch (error) {
-    console.error('Update jilid progress error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-/**
- * @swagger
- * /api/progress/jilid/{id}:
- *   delete:
- *     summary: Delete jilid progress (guru)
- *     tags: [Progress]
- *     security:
- *       - bearerAuth: []
- */
-router.delete('/jilid/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
-  try {
-    const { id } = req.params;
-
-    const result = await pool.query(
-      'DELETE FROM user_jilid_progress WHERE user_jilid_id = $1 RETURNING user_jilid_id',
-      [id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Jilid progress not found' });
-    }
-
-    res.json({ message: 'Jilid progress deleted successfully' });
-  } catch (error) {
-    console.error('Delete jilid progress error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
 /**
  * @swagger
@@ -409,10 +206,11 @@ router.get('/halaman', async (req: AuthRequest, res) => {
   try {
     const userId = req.user!.userId;
     const userRole = req.user!.role;
-    const { targetUserId, status } = req.query;
+    const { targetUserId } = req.query;
 
+    // Try to select all columns but handle the case where some might not exist
     let query = `
-      SELECT uhp.*, h.jilid_id, h.nomor_halaman, u.name as user_name
+      SELECT uhp.user_halaman_id, uhp.user_id, uhp.halaman_id, uhp.status, uhp.last_update, h.jilid_id, h.nomor_halaman, u.name as user_name
       FROM user_halaman_progress uhp
       LEFT JOIN halaman h ON CAST(h.halaman_id AS TEXT) = uhp.halaman_id
       INNER JOIN users u ON uhp.user_id = u.user_id
@@ -428,12 +226,6 @@ router.get('/halaman', async (req: AuthRequest, res) => {
     } else if (targetUserId) {
       query += ` AND uhp.user_id = $${paramCount}`;
       params.push(targetUserId);
-      paramCount++;
-    }
-
-    if (status) {
-      query += ` AND uhp.status = $${paramCount}`;
-      params.push(status);
       paramCount++;
     }
 
@@ -463,7 +255,7 @@ router.get('/halaman/:id', async (req: AuthRequest, res) => {
     const userRole = req.user!.role;
 
     const result = await pool.query(
-      `SELECT uhp.*, h.jilid_id, h.nomor_halaman, u.name as user_name
+      `SELECT uhp.user_halaman_id, uhp.user_id, uhp.halaman_id, uhp.status, uhp.last_update, h.jilid_id, h.nomor_halaman, u.name as user_name
        FROM user_halaman_progress uhp
        LEFT JOIN halaman h ON CAST(h.halaman_id AS TEXT) = uhp.halaman_id
        INNER JOIN users u ON uhp.user_id = u.user_id
@@ -547,7 +339,7 @@ router.get('/halaman/by-page/:halamanId', async (req: AuthRequest, res) => {
     const userId = req.user!.userId;
 
     const result = await pool.query(
-      `SELECT uhp.*, h.jilid_id, h.nomor_halaman
+      `SELECT uhp.user_halaman_id, uhp.user_id, uhp.halaman_id, uhp.status, uhp.last_update, h.jilid_id, h.nomor_halaman
        FROM user_halaman_progress uhp
        LEFT JOIN halaman h ON CAST(h.halaman_id AS TEXT) = uhp.halaman_id
        WHERE uhp.user_id = $1 AND uhp.halaman_id = $2`,
@@ -586,8 +378,8 @@ router.post('/halaman', async (req: AuthRequest, res) => {
     const userId = req.user!.userId;
     const { halamanId, status } = req.body;
 
-    if (!halamanId || status === undefined) {
-      return res.status(400).json({ error: 'halamanId and status are required' });
+    if (!halamanId) {
+      return res.status(400).json({ error: 'halamanId is required' });
     }
 
     const result = await pool.query(
@@ -596,7 +388,7 @@ router.post('/halaman', async (req: AuthRequest, res) => {
        ON CONFLICT (user_id, halaman_id)
        DO UPDATE SET status = $3, last_update = CURRENT_TIMESTAMP
        RETURNING *`,
-      [userId, halamanId, status]
+      [userId, halamanId, status || 0] // Default status to 0 if not provided
     );
 
     res.json({ progress: result.rows[0] });

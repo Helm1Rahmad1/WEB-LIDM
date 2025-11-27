@@ -71,31 +71,7 @@ router.get('/:id/pages', async (req, res) => {
   }
 });
 
-/**
- * @swagger
- * /api/jilid/{id}/letters:
- *   get:
- *     summary: Get letters in jilid (public)
- *     tags: [Jilid]
- */
-router.get('/:id/letters', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await pool.query(
-      `SELECT h.*, jl.sort_order 
-       FROM hijaiyah h
-       INNER JOIN jilid_letters jl ON h.hijaiyah_id = jl.hijaiyah_id
-       WHERE jl.jilid_id = $1
-       ORDER BY jl.sort_order`,
-      [id]
-    );
 
-    res.json({ letters: result.rows });
-  } catch (error) {
-    console.error('Get jilid letters error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
 /**
  * @swagger

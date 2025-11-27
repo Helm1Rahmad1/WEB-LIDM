@@ -6,75 +6,8 @@ const router = express.Router();
 
 router.use(authenticateToken);
 
-/**
- * @swagger
- * /api/jilid-letters:
- *   get:
- *     summary: Get jilid letters mapping
- *     tags: [Jilid]
- *     security:
- *       - bearerAuth: []
- */
-router.get('/', async (req, res) => {
-  try {
-    const { jilidId } = req.query;
 
-    let query = `
-      SELECT jl.*, h.latin_name, h.arabic_char, j.jilid_name
-      FROM jilid_letters jl
-      INNER JOIN hijaiyah h ON jl.hijaiyah_id = h.hijaiyah_id
-      INNER JOIN jilid j ON jl.jilid_id = j.jilid_id
-      WHERE 1=1
-    `;
-    const params: any[] = [];
 
-    if (jilidId) {
-      query += ' AND jl.jilid_id = $1';
-      params.push(jilidId);
-    }
-
-    query += ' ORDER BY jl.jilid_id, jl.sort_order';
-
-    const result = await pool.query(query, params);
-    res.json({ jilidLetters: result.rows });
-  } catch (error) {
-    console.error('Get jilid letters error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-/**
- * @swagger
- * /api/jilid-letters/{id}:
- *   get:
- *     summary: Get jilid letter by ID
- *     tags: [Jilid]
- *     security:
- *       - bearerAuth: []
- */
-router.get('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const result = await pool.query(
-      `SELECT jl.*, h.latin_name, h.arabic_char, j.jilid_name
-       FROM jilid_letters jl
-       INNER JOIN hijaiyah h ON jl.hijaiyah_id = h.hijaiyah_id
-       INNER JOIN jilid j ON jl.jilid_id = j.jilid_id
-       WHERE jl.id = $1`,
-      [id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Jilid letter not found' });
-    }
-
-    res.json({ jilidLetter: result.rows[0] });
-  } catch (error) {
-    console.error('Get jilid letter error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
 /**
  * @swagger
@@ -188,33 +121,6 @@ router.put('/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
   }
 });
 
-/**
- * @swagger
- * /api/jilid-letters/{id}:
- *   delete:
- *     summary: Remove letter from jilid (guru)
- *     tags: [Jilid]
- *     security:
- *       - bearerAuth: []
- */
-router.delete('/:id', requireRole(['guru']), async (req: AuthRequest, res) => {
-  try {
-    const { id } = req.params;
 
-    const result = await pool.query(
-      'DELETE FROM jilid_letters WHERE id = $1 RETURNING id',
-      [id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Jilid letter not found' });
-    }
-
-    res.json({ message: 'Jilid letter deleted successfully' });
-  } catch (error) {
-    console.error('Delete jilid letter error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
 export default router;
