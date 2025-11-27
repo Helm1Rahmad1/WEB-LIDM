@@ -8,14 +8,12 @@ import { swaggerSpec } from './config/swagger';
 import authRoutes from './routes/auth';
 import roomsRoutes from './routes/rooms';
 import progressRoutes from './routes/progress';
-import testsRoutes from './routes/tests';
 import hijaiyahRoutes from './routes/hijaiyah';
 import jilidRoutes from './routes/jilid';
 import jilidLettersRoutes from './routes/jilid-letters';
 import pagesRoutes from './routes/pages';
 import usersRoutes from './routes/users';
 import enrollmentsRoutes from './routes/enrollments';
-import practiceRoutes from './routes/practice';
 
 dotenv.config();
 
@@ -53,14 +51,12 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomsRoutes);
 app.use('/api/progress', progressRoutes);
-app.use('/api/tests', testsRoutes);
 app.use('/api/hijaiyah', hijaiyahRoutes);
 app.use('/api/jilid', jilidRoutes);
 app.use('/api/jilid-letters', jilidLettersRoutes);
 app.use('/api/pages', pagesRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/enrollments', enrollmentsRoutes);
-app.use('/api/practice', practiceRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });

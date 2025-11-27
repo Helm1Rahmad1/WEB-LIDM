@@ -139,10 +139,6 @@ const options: swaggerJsdoc.Options = {
         description: 'Endpoints untuk tracking progress belajar',
       },
       {
-        name: 'Tests',
-        description: 'Endpoints untuk ujian dan hasil test',
-      },
-      {
         name: 'Hijaiyah',
         description: 'Endpoints untuk data huruf hijaiyah',
       },
