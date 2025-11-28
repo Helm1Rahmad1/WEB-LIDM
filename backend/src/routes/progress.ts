@@ -459,6 +459,7 @@ router.put('/halaman/:id', requireRole(['guru']), async (req: AuthRequest, res) 
   } catch (error) {
     console.error('Update halaman progress error:', error);
     res.status(500).json({ error: 'Internal server error' });
+    
   }
 });
 
