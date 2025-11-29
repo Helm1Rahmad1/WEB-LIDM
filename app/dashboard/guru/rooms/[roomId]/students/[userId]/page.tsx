@@ -306,9 +306,13 @@ export default function StudentDetailPage({ params }: Props) {
               const apiJilidProgressItem = apiJilidProgressData.find((jp: any) => jp.jilid_id === jilid.jilid_id);
 
               // Use progress data from the new API if available, otherwise calculate from halaman data
-              const percentage = apiJilidProgressItem
+              // Cap percentage at 100% to prevent display errors
+              let percentage = apiJilidProgressItem
                 ? apiJilidProgressItem.progress_percentage
                 : (totalPages > 0 ? Math.round((completedPages / totalPages) * 100) : 0);
+
+              // Ensure percentage never exceeds 100%
+              percentage = Math.min(percentage, 100);
 
               let status: 'belum_mulai' | 'belajar' | 'selesai' = 'belum_mulai'
               if (percentage === 100) {
@@ -326,9 +330,12 @@ export default function StudentDetailPage({ params }: Props) {
                 percentage,
                 status,
                 total_pages: totalPages,
-                completed_pages: apiJilidProgressItem
-                  ? apiJilidProgressItem.total_halaman_selesai
-                  : completedPages,
+                completed_pages: Math.min(
+                  apiJilidProgressItem
+                    ? apiJilidProgressItem.total_halaman_selesai
+                    : completedPages,
+                  totalPages
+                ),
                 pages_status: pagesStatus
               }
 
@@ -376,7 +383,10 @@ export default function StudentDetailPage({ params }: Props) {
                   }
                 })
 
-                const percentage = fallbackPages > 0 ? Math.round((completedPages / fallbackPages) * 100) : 0
+                let percentage = fallbackPages > 0 ? Math.round((completedPages / fallbackPages) * 100) : 0
+                // Cap percentage at 100%
+                percentage = Math.min(percentage, 100)
+
                 let status: 'belum_mulai' | 'belajar' | 'selesai' = 'belum_mulai'
                 if (percentage === 100) status = 'selesai'
                 else if (percentage > 0) status = 'belajar'
@@ -395,9 +405,12 @@ export default function StudentDetailPage({ params }: Props) {
                   percentage,
                   status,
                   total_pages: fallbackPages,
-                  completed_pages: fallbackApiJilidProgressItem
-                    ? fallbackApiJilidProgressItem.total_halaman_selesai
-                    : completedPages,
+                  completed_pages: Math.min(
+                    fallbackApiJilidProgressItem
+                      ? fallbackApiJilidProgressItem.total_halaman_selesai
+                      : completedPages,
+                    fallbackPages
+                  ),
                   pages_status: pagesStatus
                 }
               } catch (fallbackError) {
@@ -663,73 +676,75 @@ export default function StudentDetailPage({ params }: Props) {
               initial="hidden"
               animate="visible"
             >
-              {jilidProgress.map((jilid, i) => (
-                <motion.div key={jilid.jilid_id} variants={fadeInUp}>
-                  <Card className="group border-2 border-gray-100 hover:shadow-2xl hover:-translate-y-2 hover:border-teal-300 transition-all rounded-2xl">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-4 mb-4">
-                            <motion.div whileHover={{ scale: 1.1 }}>
-                              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-600 to-teal-700 flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                                {i + 1}
+              {jilidProgress
+                .filter(jilid => jilid.total_pages > 0) // Only show jilid with pages
+                .map((jilid, i) => (
+                  <motion.div key={jilid.jilid_id} variants={fadeInUp}>
+                    <Card className="group border-2 border-gray-100 hover:shadow-2xl hover:-translate-y-2 hover:border-teal-300 transition-all rounded-2xl">
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-4 mb-4">
+                              <motion.div whileHover={{ scale: 1.1 }}>
+                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-600 to-teal-700 flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                                  {i + 1}
+                                </div>
+                              </motion.div>
+                              <div>
+                                <h3 className="text-2xl font-bold text-gray-900 group-hover:text-teal-600 transition-colors">
+                                  {jilid.jilid_name}
+                                </h3>
+                                <p className="text-gray-600 text-sm">{jilid.description}</p>
+                                <div className="flex gap-3 mt-2">
+                                  <Badge>{jilid.status === 'selesai' ? '✓ Selesai' : jilid.status === 'belajar' ? '⏳ Belajar' : '○ Belum'}</Badge>
+                                  <span className="text-sm text-gray-600">{jilid.completed_pages}/{jilid.total_pages} halaman</span>
+                                </div>
                               </div>
-                            </motion.div>
+                            </div>
                             <div>
-                              <h3 className="text-2xl font-bold text-gray-900 group-hover:text-teal-600 transition-colors">
-                                {jilid.jilid_name}
-                              </h3>
-                              <p className="text-gray-600 text-sm">{jilid.description}</p>
-                              <div className="flex gap-3 mt-2">
-                                <Badge>{jilid.status === 'selesai' ? '✓ Selesai' : jilid.status === 'belajar' ? '⏳ Belajar' : '○ Belum'}</Badge>
-                                <span className="text-sm text-gray-600">{jilid.completed_pages}/{jilid.total_pages} halaman</span>
+                              <div className="flex justify-between mb-2">
+                                <span className="text-sm font-medium">Progress</span>
+                                <span className="text-sm font-bold text-teal-600">{jilid.percentage}%</span>
+                              </div>
+                              <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                                <motion.div
+                                  className="h-full bg-gradient-to-r from-teal-500 to-teal-600"
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${jilid.percentage}%` }}
+                                  transition={{ duration: 1, delay: i * 0.1 }}
+                                />
                               </div>
                             </div>
                           </div>
-                          <div>
-                            <div className="flex justify-between mb-2">
-                              <span className="text-sm font-medium">Progress</span>
-                              <span className="text-sm font-bold text-teal-600">{jilid.percentage}%</span>
-                            </div>
-                            <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-                              <motion.div
-                                className="h-full bg-gradient-to-r from-teal-500 to-teal-600"
-                                initial={{ width: 0 }}
-                                animate={{ width: `${jilid.percentage}%` }}
-                                transition={{ duration: 1, delay: i * 0.1 }}
-                              />
-                            </div>
+
+                          <div className="ml-6">
+                            <div className="text-sm font-bold mb-2">Halaman</div>
+                            <div className="text-xs text-gray-600 mb-3">💡 Klik kotak</div>
+                            <motion.div
+                              className="grid grid-cols-5 gap-2 max-w-[200px]"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                            >
+                              {Array.from({ length: jilid.total_pages }, (_, idx) => {
+                                const pageNum = idx + 1
+                                const pageStatus = jilid.pages_status[pageNum] || 'belum_mulai'
+
+                                return (
+                                  <PageStatusDisplay
+                                    key={pageNum}
+                                    page={pageNum}
+                                    status={pageStatus}
+                                    jilidName={jilid.jilid_name}
+                                  />
+                                )
+                              })}
+                            </motion.div>
                           </div>
                         </div>
-
-                        <div className="ml-6">
-                          <div className="text-sm font-bold mb-2">Halaman</div>
-                          <div className="text-xs text-gray-600 mb-3">💡 Klik kotak</div>
-                          <motion.div
-                            className="grid grid-cols-5 gap-2 max-w-[200px]"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                          >
-                            {Array.from({ length: jilid.total_pages }, (_, idx) => {
-                              const pageNum = idx + 1
-                              const pageStatus = jilid.pages_status[pageNum] || 'belum_mulai'
-
-                              return (
-                                <PageStatusDisplay
-                                  key={pageNum}
-                                  page={pageNum}
-                                  status={pageStatus}
-                                  jilidName={jilid.jilid_name}
-                                />
-                              )
-                            })}
-                          </motion.div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
             </motion.div>
           </CardContent>
         </Card>
