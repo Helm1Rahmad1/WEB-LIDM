@@ -2,39 +2,6 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import apiClient from "@/lib/api-client"
-import { motion, AnimatePresence } from "framer-motion"
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import {
-  ArrowLeft,
-  Users,
-  Mail,
-  Calendar,
-  BookOpen,
-  Award,
-  Target,
-  BarChart3,
-  User,
-  ArrowRight,
-  Trophy,
-  FileText,
-  TrendingUp,
-  Sparkles,
-} from "lucide-react"
-import Link from "next/link"
-
-interface Props {
-  params: { roomId: string }
-}
-
-interface Room {
-  room_id: number
-  name: string
-  code: string
-  description?: string
 }
 
 interface StudentEnrollment {
@@ -63,8 +30,8 @@ export default function RoomStudentsPage({ params }: Props) {
   // Animation variants
   const fadeInUp = {
     hidden: { opacity: 0, y: 30 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: { duration: 0.5, ease: "easeOut" }
     }
@@ -83,7 +50,7 @@ export default function RoomStudentsPage({ params }: Props) {
 
   const scaleOnHover = {
     rest: { scale: 1 },
-    hover: { 
+    hover: {
       scale: 1.02,
       transition: { duration: 0.3, ease: "easeInOut" }
     }
@@ -111,7 +78,7 @@ export default function RoomStudentsPage({ params }: Props) {
         setRoom(roomRes.data.room)
 
         const raw = enrollRes.data.enrollments || []
-        
+
         // Fetch halaman data for each jilid to get real page counts
         const jilidWithPages = await Promise.all(
           allJilid.map(async (jilid: any) => {
@@ -139,7 +106,7 @@ export default function RoomStudentsPage({ params }: Props) {
         )
 
         console.log('✅ Jilid with page counts:', jilidWithPages)
-        
+
         // Fetch progress for each student
         const studentsWithProgress = await Promise.all(
           raw.map(async (row: any) => {
@@ -155,23 +122,23 @@ export default function RoomStudentsPage({ params }: Props) {
               ])
 
               const jilidProgress = jilidProgressRes.data.progress || []
-              
+
               // Calculate total and completed pages from ONLY jilid that have pages
               let totalPages = 0
               let totalCompletedPages = 0
               let completedJilidCount = 0
-              
+
               for (const jilid of jilidWithPages) {
                 const jilidPages = jilid.total_pages || 0
-                
+
                 // Skip jilid with no pages
                 if (jilidPages === 0) {
                   console.log(`⚠️ Skipping Jilid ${jilid.jilid_id} - no pages in database`)
                   continue
                 }
-                
+
                 totalPages += jilidPages
-                
+
                 // Get completed pages for this jilid
                 let jilidCompletedPages = 0
                 try {
@@ -182,7 +149,7 @@ export default function RoomStudentsPage({ params }: Props) {
                   const halamanProgress = halamanProgressRes.data.progress || []
                   jilidCompletedPages = halamanProgress.filter((hp: any) => hp.status === 1).length
                   totalCompletedPages += jilidCompletedPages
-                  
+
                   // Check if ALL pages in this jilid are completed
                   if (jilidPages > 0 && jilidCompletedPages === jilidPages) {
                     completedJilidCount++
@@ -192,14 +159,14 @@ export default function RoomStudentsPage({ params }: Props) {
                   console.error(`Error fetching halaman progress for jilid ${jilid.jilid_id}:`, err)
                 }
               }
-              
+
               console.log(`📊 Student ${row.name}: ${totalCompletedPages}/${totalPages} pages, ${completedJilidCount} jilid completed`)
-              
+
               // Calculate progress percentage based on total pages completed (not jilid)
-              const progressPercentage = totalPages > 0 
-                ? Math.round((totalCompletedPages / totalPages) * 100) 
+              const progressPercentage = totalPages > 0
+                ? Math.round((totalCompletedPages / totalPages) * 100)
                 : 0
-              
+
               // Calculate total jilid that have pages
               const jilidWithPagesCount = jilidWithPages.filter(j => j.total_pages > 0).length
 
@@ -219,7 +186,7 @@ export default function RoomStudentsPage({ params }: Props) {
               }
             } catch (progressError) {
               console.error(`Error fetching progress for user ${row.user_id}:`, progressError)
-              
+
               // Return default values if progress fetch fails
               return {
                 enrollment_id: row.enrollment_id,
@@ -262,7 +229,7 @@ export default function RoomStudentsPage({ params }: Props) {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-teal-50/30">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           className="flex flex-col items-center space-y-4"
@@ -275,7 +242,7 @@ export default function RoomStudentsPage({ params }: Props) {
               transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
             />
           </div>
-          <motion.p 
+          <motion.p
             className="text-gray-900 font-semibold text-lg"
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1.5, repeat: Infinity }}
@@ -290,7 +257,7 @@ export default function RoomStudentsPage({ params }: Props) {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-white to-teal-50/30">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="max-w-md w-full p-8 bg-white rounded-3xl shadow-2xl space-y-4 text-center border border-gray-100"
@@ -300,8 +267,8 @@ export default function RoomStudentsPage({ params }: Props) {
           </div>
           <h2 className="text-2xl font-bold text-gray-900">Terjadi Kesalahan</h2>
           <p className="text-red-600 font-medium">{error}</p>
-          <Button 
-            onClick={() => location.reload()} 
+          <Button
+            onClick={() => location.reload()}
             className="mt-4 bg-teal-600 hover:bg-teal-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
           >
             Coba Lagi
@@ -317,7 +284,7 @@ export default function RoomStudentsPage({ params }: Props) {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-teal-50/30 relative overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div 
+        <motion.div
           className="absolute top-20 left-20 w-96 h-96 bg-teal-500/5 rounded-full blur-3xl"
           animate={{
             y: [0, 30, 0],
@@ -330,7 +297,7 @@ export default function RoomStudentsPage({ params }: Props) {
             ease: "easeInOut"
           }}
         />
-        <motion.div 
+        <motion.div
           className="absolute bottom-40 right-20 w-80 h-80 bg-yellow-500/5 rounded-full blur-3xl"
           animate={{
             y: [0, -30, 0],
@@ -346,7 +313,7 @@ export default function RoomStudentsPage({ params }: Props) {
       </div>
 
       {/* Header */}
-      <motion.header 
+      <motion.header
         className="relative z-20 backdrop-blur-lg bg-white/80 shadow-xl border-b border-gray-200/50"
         initial={{ y: -100 }}
         animate={{ y: 0 }}
@@ -364,7 +331,7 @@ export default function RoomStudentsPage({ params }: Props) {
                 </motion.div>
               </Link>
               <div className="flex items-center space-x-4">
-                <motion.div 
+                <motion.div
                   className="p-4 rounded-2xl bg-gradient-to-br from-teal-600 to-teal-700 shadow-lg"
                   whileHover={{ rotate: 12, scale: 1.1 }}
                   transition={{ duration: 0.3 }}
@@ -372,7 +339,7 @@ export default function RoomStudentsPage({ params }: Props) {
                   <Users className="h-8 w-8 text-white" />
                 </motion.div>
                 <div>
-                  <motion.h1 
+                  <motion.h1
                     className="text-3xl font-bold bg-gradient-to-r from-teal-700 to-teal-600 bg-clip-text text-transparent"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -380,7 +347,7 @@ export default function RoomStudentsPage({ params }: Props) {
                   >
                     Murid - {room.name}
                   </motion.h1>
-                  <motion.p 
+                  <motion.p
                     className="text-base text-gray-600 font-medium mt-1"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -392,14 +359,14 @@ export default function RoomStudentsPage({ params }: Props) {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <motion.div 
+              <motion.div
                 className="text-center p-4 rounded-2xl bg-white shadow-lg border border-gray-100"
                 whileHover={{ y: -5, shadow: "0 20px 25px -5px rgba(0,0,0,0.1)" }}
               >
                 <div className="text-3xl font-black text-teal-600">{students.length}</div>
                 <div className="text-sm text-gray-600 font-medium">Total Murid</div>
               </motion.div>
-              <motion.div 
+              <motion.div
                 className="text-center p-4 rounded-2xl bg-gradient-to-br from-yellow-400 to-yellow-500 shadow-lg"
                 whileHover={{ y: -5, shadow: "0 20px 25px -5px rgba(0,0,0,0.1)" }}
               >
@@ -419,11 +386,11 @@ export default function RoomStudentsPage({ params }: Props) {
         >
           <Card className="border-0 bg-white/95 backdrop-blur-sm shadow-2xl rounded-3xl overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-teal-50 via-white to-yellow-50 p-10 border-b border-gray-100">
-              <motion.div 
+              <motion.div
                 className="flex items-center space-x-4"
                 variants={fadeInUp}
               >
-                <motion.div 
+                <motion.div
                   className="p-3 rounded-2xl bg-gradient-to-br from-teal-600 to-teal-700 shadow-lg"
                   whileHover={{ rotate: 360, scale: 1.1 }}
                   transition={{ duration: 0.6 }}
@@ -441,7 +408,7 @@ export default function RoomStudentsPage({ params }: Props) {
             <CardContent className="p-10">
               <AnimatePresence mode="wait">
                 {students.length > 0 ? (
-                  <motion.div 
+                  <motion.div
                     className="space-y-6"
                     variants={staggerContainer}
                     initial="hidden"
@@ -462,7 +429,7 @@ export default function RoomStudentsPage({ params }: Props) {
                           initial="rest"
                         >
                           <Card className="group relative overflow-hidden border-2 border-gray-100 bg-white hover:shadow-2xl transition-all duration-500 rounded-2xl hover:-translate-y-2 hover:border-teal-300">
-                            <motion.div 
+                            <motion.div
                               className="absolute inset-0 bg-gradient-to-r from-teal-500/5 via-transparent to-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                             />
                             <CardContent className="relative p-8">
@@ -470,7 +437,7 @@ export default function RoomStudentsPage({ params }: Props) {
                                 <div className="flex-1">
                                   {/* Student Header */}
                                   <div className="flex items-center space-x-4 mb-6">
-                                    <motion.div 
+                                    <motion.div
                                       className="relative"
                                       whileHover={{ scale: 1.1, rotate: 5 }}
                                       transition={{ duration: 0.3 }}
@@ -478,7 +445,7 @@ export default function RoomStudentsPage({ params }: Props) {
                                       <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-600 to-teal-700 flex items-center justify-center text-white font-bold text-xl shadow-lg">
                                         {enrollment.users?.name?.charAt(0).toUpperCase() || "U"}
                                       </div>
-                                      <motion.div 
+                                      <motion.div
                                         className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center"
                                         animate={{ scale: [1, 1.2, 1] }}
                                         transition={{ duration: 2, repeat: Infinity }}
@@ -491,7 +458,7 @@ export default function RoomStudentsPage({ params }: Props) {
                                         {enrollment.users?.name || "Nama tidak tersedia"}
                                       </h3>
                                       <div className="flex flex-wrap items-center gap-3 text-sm">
-                                        <motion.div 
+                                        <motion.div
                                           className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-teal-50 border border-teal-200"
                                           whileHover={{ scale: 1.05 }}
                                         >
@@ -500,7 +467,7 @@ export default function RoomStudentsPage({ params }: Props) {
                                             {enrollment.users?.email || "Email tidak tersedia"}
                                           </span>
                                         </motion.div>
-                                        <motion.div 
+                                        <motion.div
                                           className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-yellow-50 border border-yellow-200"
                                           whileHover={{ scale: 1.05 }}
                                         >
@@ -516,7 +483,7 @@ export default function RoomStudentsPage({ params }: Props) {
                                   {/* Stats */}
                                   <div className="grid sm:grid-cols-1 lg:grid-cols-3 gap-6">
                                     {/* Total Halaman */}
-                                    <motion.div 
+                                    <motion.div
                                       className="group/stat relative overflow-hidden p-6 bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl border-2 border-blue-200/50 hover:shadow-xl transition-all duration-300"
                                       whileHover={{ y: -5, scale: 1.02 }}
                                     >
@@ -524,7 +491,7 @@ export default function RoomStudentsPage({ params }: Props) {
                                       <div className="relative">
                                         <div className="flex items-center justify-between mb-4">
                                           <div className="flex items-center space-x-3">
-                                            <motion.div 
+                                            <motion.div
                                               className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20"
                                               whileHover={{ rotate: 360 }}
                                               transition={{ duration: 0.6 }}
@@ -558,7 +525,7 @@ export default function RoomStudentsPage({ params }: Props) {
                                     </motion.div>
 
                                     {/* Jilid Selesai */}
-                                    <motion.div 
+                                    <motion.div
                                       className="group/stat relative overflow-hidden p-6 bg-gradient-to-br from-green-50 to-green-100/50 rounded-2xl border-2 border-green-200/50 hover:shadow-xl transition-all duration-300"
                                       whileHover={{ y: -5, scale: 1.02 }}
                                     >
@@ -566,7 +533,7 @@ export default function RoomStudentsPage({ params }: Props) {
                                       <div className="relative">
                                         <div className="flex items-center justify-between mb-4">
                                           <div className="flex items-center space-x-3">
-                                            <motion.div 
+                                            <motion.div
                                               className="p-2 rounded-xl bg-green-500/10 border border-green-500/20"
                                               whileHover={{ rotate: 360 }}
                                               transition={{ duration: 0.6 }}
@@ -600,7 +567,7 @@ export default function RoomStudentsPage({ params }: Props) {
                                     </motion.div>
 
                                     {/* Persentase Kemajuan */}
-                                    <motion.div 
+                                    <motion.div
                                       className="group/stat relative overflow-hidden p-6 bg-gradient-to-br from-yellow-50 to-yellow-100/50 rounded-2xl border-2 border-yellow-200/50 hover:shadow-xl transition-all duration-300"
                                       whileHover={{ y: -5, scale: 1.02 }}
                                     >
@@ -608,7 +575,7 @@ export default function RoomStudentsPage({ params }: Props) {
                                       <div className="relative">
                                         <div className="flex items-center justify-between mb-4">
                                           <div className="flex items-center space-x-3">
-                                            <motion.div 
+                                            <motion.div
                                               className="p-2 rounded-xl bg-yellow-500/10 border border-yellow-500/20"
                                               whileHover={{ rotate: 360 }}
                                               transition={{ duration: 0.6 }}
@@ -659,87 +626,55 @@ export default function RoomStudentsPage({ params }: Props) {
                                             </div>
                                           </div>
                                         </div>
+                    })}
+                                    </motion.div>
+                                    ) : (
+                                    <motion.div
+                                      className="text-center py-20"
+                                      initial={{ opacity: 0, scale: 0.9 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      transition={{ duration: 0.5 }}
+                                    >
+                                      <motion.div
+                                        className="mx-auto mb-8 p-8 rounded-3xl bg-gradient-to-br from-teal-50 to-yellow-50 w-fit"
+                                        animate={{
+                                          y: [0, -10, 0],
+                                        }}
+                                        transition={{
+                                          duration: 3,
+                                          repeat: Infinity,
+                                          ease: "easeInOut"
+                                        }}
+                                      >
+                                        <Users className="h-20 w-20 mx-auto text-teal-600" />
+                                      </motion.div>
+                                      <h3 className="text-3xl font-bold text-gray-900 mb-4">Belum ada murid</h3>
+                                      <p className="text-gray-600 mb-10 text-xl max-w-lg mx-auto leading-relaxed">
+                                        Bagikan kode kelas kepada murid untuk bergabung dan memulai pembelajaran
+                                      </p>
+                                      <div className="space-y-6">
+                                        <div className="flex items-center justify-center space-x-4">
+                                          <span className="text-lg font-semibold text-gray-700">Kode Kelas:</span>
+                                          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                                            <Badge className="text-2xl font-mono px-6 py-3 bg-gradient-to-r from-teal-600 to-teal-700 text-white border-2 border-teal-500 shadow-lg hover:shadow-xl transition-all duration-300">
+                                              {room.code}
+                                            </Badge>
+                                          </motion.div>
+                                        </div>
+                                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                                          <Button className="group relative overflow-hidden font-bold px-10 py-5 rounded-xl bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white shadow-2xl hover:shadow-3xl transition-all duration-300 text-xl">
+                                            <BookOpen className="h-7 w-7 mr-3 group-hover:rotate-12 transition-transform duration-500" />
+                                            <span>Panduan Bergabung</span>
+                                          </Button>
+                                        </motion.div>
                                       </div>
                                     </motion.div>
-                                  </div>
-                                </div>
-
-                                {/* Action Button */}
-                                <div className="ml-8 flex flex-col space-y-4">
-                                  <Link href={`/dashboard/guru/rooms/${roomId}/students/${enrollment.user_id}`}>
-                                    <motion.div
-                                      whileHover={{ scale: 1.05 }}
-                                      whileTap={{ scale: 0.95 }}
-                                    >
-                                      <Button className="group relative overflow-hidden font-bold px-8 py-4 rounded-xl bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white shadow-xl hover:shadow-2xl transition-all duration-300 text-lg">
-                                        <User className="h-6 w-6 mr-3 group-hover:rotate-12 transition-transform duration-300" />
-                                        <span>Lihat Detail</span>
-                                        <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
-                                      </Button>
-                                    </motion.div>
-                                  </Link>
-                                  <motion.div 
-                                    className="text-center p-3 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-500 shadow-lg"
-                                    whileHover={{ scale: 1.05 }}
-                                  >
-                                    <div className="text-lg font-bold text-white">{progressPercentage}%</div>
-                                    <div className="text-xs text-white/90 font-semibold uppercase tracking-wide">Kemajuan</div>
-                                  </motion.div>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </motion.div>
-                      )
-                    })}
-                  </motion.div>
-                ) : (
-                  <motion.div 
-                    className="text-center py-20"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <motion.div 
-                      className="mx-auto mb-8 p-8 rounded-3xl bg-gradient-to-br from-teal-50 to-yellow-50 w-fit"
-                      animate={{
-                        y: [0, -10, 0],
-                      }}
-                      transition={{
-                        duration: 3,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }}
-                    >
-                      <Users className="h-20 w-20 mx-auto text-teal-600" />
-                    </motion.div>
-                    <h3 className="text-3xl font-bold text-gray-900 mb-4">Belum ada murid</h3>
-                    <p className="text-gray-600 mb-10 text-xl max-w-lg mx-auto leading-relaxed">
-                      Bagikan kode kelas kepada murid untuk bergabung dan memulai pembelajaran
-                    </p>
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-center space-x-4">
-                        <span className="text-lg font-semibold text-gray-700">Kode Kelas:</span>
-                        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                          <Badge className="text-2xl font-mono px-6 py-3 bg-gradient-to-r from-teal-600 to-teal-700 text-white border-2 border-teal-500 shadow-lg hover:shadow-xl transition-all duration-300">
-                            {room.code}
-                          </Badge>
-                        </motion.div>
-                      </div>
-                      <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                        <Button className="group relative overflow-hidden font-bold px-10 py-5 rounded-xl bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white shadow-2xl hover:shadow-3xl transition-all duration-300 text-xl">
-                          <BookOpen className="h-7 w-7 mr-3 group-hover:rotate-12 transition-transform duration-500" />
-                          <span>Panduan Bergabung</span>
-                        </Button>
-                      </motion.div>
-                    </div>
-                  </motion.div>
                 )}
-              </AnimatePresence>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-    </div>
-  )
-}
+                                  </AnimatePresence>
+                                </CardContent>
+                              </Card>
+                            </motion.div>
+                          </div>
+                        </div>
+                      )
+                    }

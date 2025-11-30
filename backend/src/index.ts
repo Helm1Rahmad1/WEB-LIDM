@@ -14,6 +14,7 @@ import jilidLettersRoutes from './routes/jilid-letters';
 import pagesRoutes from './routes/pages';
 import usersRoutes from './routes/users';
 import enrollmentsRoutes from './routes/enrollments';
+import messagesRoutes from './routes/messages';
 
 dotenv.config();
 
@@ -27,7 +28,7 @@ app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     if (frontendUrls.includes(origin)) {
       callback(null, true);
     } else {
@@ -57,6 +58,7 @@ app.use('/api/jilid-letters', jilidLettersRoutes);
 app.use('/api/pages', pagesRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/enrollments', enrollmentsRoutes);
+app.use('/api/messages', messagesRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
