@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/hooks/useAuth"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, BookOpen, Award, Plus, ArrowRight, Sparkles, Target, BarChart3, LogOut, TrendingUp, Calendar, Check } from "lucide-react"
+import { Users, BookOpen, Plus, ArrowRight, Sparkles, Target, BarChart3, LogOut, Calendar, Check } from "lucide-react"
 import Link from "next/link"
 import apiClient from "@/lib/api-client"
 import { motion, AnimatePresence } from "framer-motion"
@@ -216,7 +216,7 @@ export default function GuruDashboardPage() {
       <div className="relative z-10 max-w-7xl mx-auto p-6 space-y-8">
         {/* Stats Cards */}
         <motion.div 
-          className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="grid sm:grid-cols-1 lg:grid-cols-2 gap-6"
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
@@ -241,16 +241,6 @@ export default function GuruDashboardPage() {
               bgColor: "from-yellow-50 to-yellow-100/50",
               iconBg: "bg-yellow-100",
               iconColor: "text-yellow-600"
-            },
-            {
-              icon: Award,
-              title: "Tes Selesai",
-              value: 0,
-              subtitle: "Evaluasi lengkap",
-              color: "from-gray-700 to-gray-800",
-              bgColor: "from-gray-50 to-gray-100/50",
-              iconBg: "bg-gray-100",
-              iconColor: "text-gray-700"
             }
           ].map((stat, index) => (
             <motion.div
@@ -470,8 +460,7 @@ export default function GuruDashboardPage() {
               <CardContent className="p-8 space-y-6">
                 {[
                   { value: rooms?.length || 0, label: "Kelas Aktif", color: "from-teal-600 to-teal-700", bg: "from-teal-50 to-teal-100/50", icon: BookOpen },
-                  { value: totalStudents || 0, label: "Total Murid", color: "from-yellow-400 to-yellow-500", bg: "from-yellow-50 to-yellow-100/50", icon: Users },
-                  { value: "100%", label: "Kepuasan", color: "from-green-500 to-green-600", bg: "from-green-50 to-green-100/50", icon: TrendingUp }
+                  { value: totalStudents || 0, label: "Total Murid", color: "from-yellow-400 to-yellow-500", bg: "from-yellow-50 to-yellow-100/50", icon: Users }
                 ].map((stat, index) => (
                   <motion.div 
                     key={index}

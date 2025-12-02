@@ -179,7 +179,7 @@ Response:
     {
       "room_id": 1,
       "name": "Kelas A",
-      "description": "Kelas belajar hijaiyah",
+      "description": "Kelas Sign Quran",
       "code": "ABC123",
       "created_by": 1,
       "created_at": "2025-01-01T00:00:00.000Z"
@@ -197,7 +197,7 @@ Response:
   "room": {
     "room_id": 1,
     "name": "Kelas A",
-    "description": "Kelas belajar hijaiyah",
+    "description": "Kelas Sign Quran",
     "code": "ABC123",
     "created_by": 1,
     "created_at": "2025-01-01T00:00:00.000Z"
@@ -212,7 +212,7 @@ Request Body:
 ```json
 {
   "name": "Kelas A",
-  "description": "Kelas belajar hijaiyah",
+  "description": "Kelas Sign Quran",
   "code": "ABC123"
 }
 ```
